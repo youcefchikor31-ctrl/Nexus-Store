@@ -76,11 +76,19 @@
         .modal-content { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 450px; padding: 30px; border-radius: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #cbd5e1; font-size: 0.9rem; }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; }
+        .form-group select { cursor: pointer; }
         .error-hint { color: #f43f5e; font-size: 0.75rem; margin-top: 4px; display: none; }
         .submit-order-btn { width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        .submit-order-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        
         .success-msg { text-align: center; display: none; }
-        .success-msg i { font-size: 4rem; color: #10b981; margin-bottom: 15px; }
+        .success-msg i { font-size: 4rem; margin-bottom: 15px; }
+        .success-msg.success i { color: #10b981; }
+        .success-msg.error i { color: #f43f5e; }
+        .success-msg.loading i { color: #38bdf8; animation: spin 1s linear infinite; }
+        
+        .modal-close-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -118,7 +126,7 @@
             <div id="order-form-container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 id="t-modal-title" style="color: #fff;">تأكيد الطلب</h3>
-                    <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                    <button type="button" onclick="closeModal()" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <form id="checkoutForm" onsubmit="submitOrderToTelegram(event)">
                     <div class="form-group">
@@ -139,18 +147,25 @@
                         <div class="error-hint" id="phone-error">رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07</div>
                     </div>
                     <div class="form-group">
-                        <label id="t-address-label">العنوان (الولاية / البلدية):</label>
-                        <textarea id="client-address" rows="2" placeholder="أدخل عنوانك بالتفصيل..." required></textarea>
+                        <label id="t-wilaya-label">الولاية:</label>
+                        <select id="client-wilaya" required onchange="updateCircles()">
+                            <option value="">-- اختر الولاية --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="t-daira-label">الدائرة / البلدية:</label>
+                        <select id="client-daira" required>
+                            <option value="">-- اختر الدائرة أولاً --</option>
+                        </select>
                     </div>
                     <button type="submit" class="submit-order-btn" id="t-submit-btn">إرسال الطلب نهائياً</button>
                 </form>
             </div>
 
             <div class="success-msg" id="successMsg">
-                <i class="fa-solid fa-circle-check"></i>
-                <h3 id="t-success-title" style="color:#fff;">تم إرسال طلبك بنجاح!</h3>
-                <p id="t-success-desc" style="color: #94a3b8; margin-bottom: 20px;">سنتواصل معك قريباً لتأكيد التوصيل.</p>
-                <button class="submit-order-btn" onclick="closeModal()">حسناً</button>
+                <i class="fa-solid fa-spinner"></i>
+                <h3 id="t-success-title" style="color:#fff;">جاري معالجة طلبك...</h3>
+                <p id="t-success-desc" style="color: #94a3b8; margin-bottom: 20px;">يرجى الانتظار...</p>
             </div>
         </div>
     </div>
@@ -174,6 +189,51 @@
         let selectedProduct = { name: '', price: 0, qty: 1 };
         let productsData = [];
 
+        // قاعمة الولايات والدوائر الجزائرية
+        const algerianWilayas = {
+            "أدرار": ["أدرار", "أراقلة", "أولف", "تيمياوين"],
+            "الشلف": ["الشلف", "بومرداس", "دراق", "سيدي علي بوسيدي"],
+            "الجزائر": ["الجزائر الوسطى", "بن عكنون", "بوزريعة", "الشراقة", "درارية"],
+            "تيارت": ["تيارت", "آفلو", "ثنية الحد", "سيدي بوعلام"],
+            "تلمسان": ["تلمسان", "مغنية", "بني منصور", "سبدو"],
+            "الجلفة": ["الجلفة", "برج بونعامة", "بريان", "القاسم"],
+            "جيجل": ["جيجل", "الأنسام", "بونوار، الميلية"],
+            "سطيف": ["سطيف", "أولاد جديع", "بني عزيز", "عين الدفلى"],
+            "سعيدة": ["سعيدة", "أولاد خليفة", "موسى لاي"],
+            "سكيكدة": ["سكيكدة", "الحرّاش، علي منجلي"],
+            "سيدي بلعباس": ["سيدي بلعباس", "الحمادية", "سيدي خطاب"],
+            "عنابة": ["عنابة", "البطارية، سيدي عمّار"],
+            "قالمة": ["قالمة", "براقي، تاجروت"],
+            "قسنطينة": ["قسنطينة", "الحارة، حامة الباغ"],
+            "المدية": ["المدية", "أولاد يحيى، خمسة"],
+            "مستغانم": ["مستغانم", "الشرارقة، سطاوالي"],
+            "معسكر": ["معسكر", "زاكار، بني ستوت"],
+            "الوادي": ["الوادي", "غردايا، تقرت"],
+            "ورقلة": ["ورقلة", "تقرت، البليدة"],
+            "وهران": ["وهران", "السنية الجديدة"],
+            "الأغواط": ["الأغواط", "القصور"],
+            "البليدة": ["البليدة", "الشرّيعة، شيشة"],
+            "البيض": ["البيض", "عين بن ناحية"],
+            "بسكرة": ["بسكرة", "أولاد جلال", "سيدي خالد"],
+            "بشار": ["بشار", "قصدار"],
+            "بويرة": ["بويرة", "أولاد أحمد"],
+            "تبسة": ["تبسة", "الونزة، عينيه"],
+            "تسمسيلت": ["تسمسيلت", "لعطاء"],
+            "خنشلة": ["خنشلة", "عين الترك"],
+            "عين الدفلى": ["عين الدفلى", "بئر الخاشة"],
+            "عين تيموشنت": ["عين تيموشنت", "سيدي بن عديس"],
+            "غليزان": ["غليزان", "مصفصة"],
+            "غردايا": ["غردايا", "بنورة", "الهنيات"],
+            "إليزي": ["إليزي", "تمنراست"],
+            "جانت": ["جانت"],
+            "لسان": ["ليسان"],
+            "النعامة": ["النعامة", "عين صفرة"],
+            "منيعة": ["منيعة"],
+            "تمنراست": ["تمنراست", "إن قزّام"],
+            "تيندوف": ["تيندوف", "بوجدور"],
+            "تيسيمسيلت": ["تيسيمسيلت", "لحجار"]
+        };
+
         // قاموس اللغات
         const translations = {
             ar: {
@@ -189,10 +249,15 @@
                 qtyLabel: "الكمية:",
                 nameLabel: "الاسم واللقب:",
                 phoneLabel: "رقم الهاتف:",
-                addressLabel: "العنوان (الولاية / البلدية):",
+                wilayaLabel: "الولاية:",
+                dairaLabel: "الدائرة / البلدية:",
                 submitBtn: "إرسال الطلب نهائياً",
-                successTitle: "تم إرسال طلبك بنجاح!",
+                processingTitle: "جاري معالجة طلبك...",
+                processingDesc: "يرجى الانتظار...",
+                successTitle: "تم إرسال طلبك بنجاح! ✓",
                 successDesc: "سنتواصل معك قريباً لتأكيد التوصيل.",
+                errorTitle: "حدث خطأ! ✗",
+                errorDesc: "يرجى المحاولة مرة أخرى.",
                 errorPhone: "رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07"
             },
             fr: {
@@ -208,10 +273,15 @@
                 qtyLabel: "Quantité:",
                 nameLabel: "Nom et Prénom:",
                 phoneLabel: "Numéro de téléphone:",
-                addressLabel: "Adresse (Wilaya / Commune):",
+                wilayaLabel: "Wilaya:",
+                dairaLabel: "Daïra/Commune:",
                 submitBtn: "Envoyer la commande",
-                successTitle: "Commande envoyée avec succès !",
+                processingTitle: "Traitement de votre commande...",
+                processingDesc: "Veuillez patienter...",
+                successTitle: "Commande envoyée avec succès ! ✓",
                 successDesc: "Nous vous contacterons bientôt pour confirmer.",
+                errorTitle: "Une erreur s'est produite ! ✗",
+                errorDesc: "Veuillez réessayer.",
                 errorPhone: "Le numéro doit comporter 10 chiffres (05, 06, 07)"
             },
             en: {
@@ -227,10 +297,15 @@
                 qtyLabel: "Quantity:",
                 nameLabel: "Full Name:",
                 phoneLabel: "Phone Number:",
-                addressLabel: "Address (State / City):",
+                wilayaLabel: "State:",
+                dairaLabel: "District/City:",
                 submitBtn: "Submit Order",
-                successTitle: "Order Sent Successfully!",
+                processingTitle: "Processing your order...",
+                processingDesc: "Please wait...",
+                successTitle: "Order Sent Successfully! ✓",
                 successDesc: "We will contact you soon to confirm delivery.",
+                errorTitle: "An Error Occurred! ✗",
+                errorDesc: "Please try again.",
                 errorPhone: "Phone number must be 10 digits starting with 05, 06, or 07"
             }
         };
@@ -249,16 +324,45 @@
             document.getElementById('t-qty-label').innerText = t.qtyLabel;
             document.getElementById('t-name-label').innerText = t.nameLabel;
             document.getElementById('t-phone-label').innerText = t.phoneLabel;
-            document.getElementById('t-address-label').innerText = t.addressLabel;
+            document.getElementById('t-wilaya-label').innerText = t.wilayaLabel;
+            document.getElementById('t-daira-label').innerText = t.dairaLabel;
             document.getElementById('t-submit-btn').innerText = t.submitBtn;
-            document.getElementById('t-success-title').innerText = t.successTitle;
-            document.getElementById('t-success-desc').innerText = t.successDesc;
             document.getElementById('phone-error').innerText = t.errorPhone;
 
             const loadingText = document.getElementById('t-loading');
             if (loadingText) loadingText.innerText = t.loading;
 
+            loadWilayas();
             renderProducts();
+        }
+
+        window.loadWilayas = function() {
+            const wilayaSelect = document.getElementById('client-wilaya');
+            wilayaSelect.innerHTML = '<option value="">-- اختر الولاية --</option>';
+            
+            Object.keys(algerianWilayas).forEach(wilaya => {
+                const option = document.createElement('option');
+                option.value = wilaya;
+                option.textContent = wilaya;
+                wilayaSelect.appendChild(option);
+            });
+        }
+
+        window.updateCircles = function() {
+            const wilayaSelect = document.getElementById('client-wilaya');
+            const dairaSelect = document.getElementById('client-daira');
+            const selectedWilaya = wilayaSelect.value;
+
+            dairaSelect.innerHTML = '<option value="">-- اختر الدائرة --</option>';
+
+            if (selectedWilaya && algerianWilayas[selectedWilaya]) {
+                algerianWilayas[selectedWilaya].forEach(daira => {
+                    const option = document.createElement('option');
+                    option.value = daira;
+                    option.textContent = daira;
+                    dairaSelect.appendChild(option);
+                });
+            }
         }
 
         async function loadProducts() {
@@ -268,6 +372,7 @@
                 querySnapshot.forEach((doc) => {
                     productsData.push({ id: doc.id, ...doc.data() });
                 });
+                loadWilayas();
                 renderProducts();
             } catch (error) {
                 console.error("Error loading products:", error);
@@ -298,11 +403,11 @@
                     </div>
                     <div class="card-actions">
                         <div class="quantity-control">
-                            <button class="qty-btn" onclick="changeQty(this, -1)">-</button>
+                            <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
                             <input type="text" class="qty-input" value="1" readonly>
-                            <button class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                            <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
                         </div>
-                        <button class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
+                        <button type="button" class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
                             <i class="fa-solid fa-bag-shopping"></i> ${t.buyBtn}
                         </button>
                     </div>
@@ -329,6 +434,8 @@
             document.getElementById('order-form-container').style.display = 'block';
             document.getElementById('successMsg').style.display = 'none';
             document.getElementById('checkoutForm').reset();
+            document.getElementById('client-wilaya').value = '';
+            document.getElementById('client-daira').innerHTML = '<option value="">-- اختر الدائرة أولاً --</option>';
             document.getElementById('orderModal').classList.add('active');
         }
 
@@ -338,9 +445,11 @@
 
         window.submitOrderToTelegram = function(event) {
             event.preventDefault();
+            
             const name = document.getElementById('client-name').value.trim();
             const phone = document.getElementById('client-phone').value.trim();
-            const address = document.getElementById('client-address').value.trim();
+            const wilaya = document.getElementById('client-wilaya').value;
+            const daira = document.getElementById('client-daira').value;
 
             if (!/^(05|06|07)[0-9]{8}$/.test(phone)) {
                 document.getElementById('phone-error').style.display = 'block';
@@ -348,25 +457,102 @@
             }
             document.getElementById('phone-error').style.display = 'none';
 
+            // إخفاء النموذج وإظهار رسالة التحميل
+            document.getElementById('order-form-container').style.display = 'none';
+            const successMsg = document.getElementById('successMsg');
+            successMsg.style.display = 'block';
+            successMsg.className = 'success-msg loading';
+            
+            const currentLang = document.getElementById('langSwitcher').value;
+            const t = translations[currentLang];
+            
+            document.getElementById('t-success-title').innerText = t.processingTitle;
+            document.getElementById('t-success-desc').innerText = t.processingDesc;
+
             const message = `🚨 *طلب جديد من المتجر!*\n\n` +
                             `🛍️ *المنتج:* ${selectedProduct.name}\n` +
                             `🔢 *الكمية:* ${selectedProduct.qty}\n` +
                             `💰 *الإجمالي:* ${selectedProduct.price * selectedProduct.qty} DZD\n\n` +
                             `👤 *الاسم:* ${name}\n` +
                             `📞 *الهاتف:* ${phone}\n` +
-                            `📍 *العنوان:* ${address}`;
+                            `📍 *الولاية:* ${wilaya}\n` +
+                            `📍 *الدائرة:* ${daira}`;
 
             fetch(`https://api.telegram.org/bot8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: "5640395613", text: message, parse_mode: 'Markdown' })
             }).then(res => {
-                if (res.ok) {
-                    document.getElementById('order-form-container').style.display = 'none';
-                    document.getElementById('successMsg').style.display = 'block';
-                    let count = parseInt(document.getElementById('cart-count').innerText);
-                    document.getElementById('cart-count').innerText = count + selectedProduct.qty;
-                }
+                setTimeout(() => {
+                    if (res.ok) {
+                        // نجاح
+                        successMsg.className = 'success-msg success';
+                        document.getElementById('t-success-title').innerText = t.successTitle;
+                        document.getElementById('t-success-desc').innerText = t.successDesc;
+                        document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                        
+                        let count = parseInt(document.getElementById('cart-count').innerText);
+                        document.getElementById('cart-count').innerText = count + selectedProduct.qty;
+                        
+                        // إضافة زر الإغلاق
+                        const closeBtn = document.createElement('button');
+                        closeBtn.type = 'button';
+                        closeBtn.className = 'submit-order-btn';
+                        closeBtn.style.marginTop = '20px';
+                        closeBtn.textContent = 'حسناً';
+                        closeBtn.onclick = closeModal;
+                        
+                        // إزالة أي أزرار سابقة
+                        const oldBtn = document.querySelector('#successMsg .submit-order-btn');
+                        if (oldBtn) oldBtn.remove();
+                        document.getElementById('successMsg').appendChild(closeBtn);
+                    } else {
+                        // فشل
+                        successMsg.className = 'success-msg error';
+                        document.getElementById('t-success-title').innerText = t.errorTitle;
+                        document.getElementById('t-success-desc').innerText = t.errorDesc;
+                        document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                        
+                        // إضافة زر المحاولة مرة أخرى
+                        const retryBtn = document.createElement('button');
+                        retryBtn.type = 'button';
+                        retryBtn.className = 'submit-order-btn';
+                        retryBtn.style.marginTop = '20px';
+                        retryBtn.textContent = 'محاولة أخرى';
+                        retryBtn.onclick = () => {
+                            document.getElementById('order-form-container').style.display = 'block';
+                            document.getElementById('successMsg').style.display = 'none';
+                        };
+                        
+                        // إزالة أي أزرار سابقة
+                        const oldBtn = document.querySelector('#successMsg .submit-order-btn');
+                        if (oldBtn) oldBtn.remove();
+                        document.getElementById('successMsg').appendChild(retryBtn);
+                    }
+                }, 2000); // تأخير 2 ثانية لعرض حالة التحميل
+            }).catch(err => {
+                // خطأ في الاتصال
+                console.error(err);
+                setTimeout(() => {
+                    successMsg.className = 'success-msg error';
+                    document.getElementById('t-success-title').innerText = t.errorTitle;
+                    document.getElementById('t-success-desc').innerText = "خطأ في الاتصال بالخادم";
+                    document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                    
+                    const retryBtn = document.createElement('button');
+                    retryBtn.type = 'button';
+                    retryBtn.className = 'submit-order-btn';
+                    retryBtn.style.marginTop = '20px';
+                    retryBtn.textContent = 'محاولة أخرى';
+                    retryBtn.onclick = () => {
+                        document.getElementById('order-form-container').style.display = 'block';
+                        document.getElementById('successMsg').style.display = 'none';
+                    };
+                    
+                    const oldBtn = document.querySelector('#successMsg .submit-order-btn');
+                    if (oldBtn) oldBtn.remove();
+                    document.getElementById('successMsg').appendChild(retryBtn);
+                }, 2000);
             });
         }
     </script>
