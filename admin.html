@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المدير - Nexus Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background-color: #0b0f19; color: #f3f4f6; padding: 20px; }
+        .container { max-width: 800px; margin: 40px auto; background: rgba(30, 41, 59, 0.6); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        h2 { color: #38bdf8; margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #cbd5e1; }
+        input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; }
+        .btn { width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .product-list { margin-top: 30px; }
+        .item { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 20px; border-radius: 10px; margin-bottom: 10px; }
+        .delete-btn { background: #f43f5e; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><i class="fa-solid fa-user-gear"></i> لوحة تحكم المدير (أخوك)</h2>
+        
+        <form id="addProductForm">
+            <div class="form-group">
+                <label>اسم المنتج:</label>
+                <input type="text" id="p-name" required placeholder="مثال: سماعات لاسلكية جديدة">
+            </div>
+            <div class="form-group">
+                <label>السعر (بالدينار DZD):</label>
+                <input type="number" id="p-price" required placeholder="مثال: 5500">
+            </div>
+            <div class="form-group">
+                <label>رابط صورة المنتج (Image URL):</label>
+                <input type="url" id="p-image" required placeholder="ضع رابط صورة مباشرة هنا">
+            </div>
+            <button type="submit" class="btn">إضافة المنتج للموقع فوراً</button>
+        </form>
+
+        <div class="product-list">
+            <h3 style="color: #fff; margin-bottom: 15px;">المنتجات المعروضة حالياً:</h3>
+            <div id="admin-products-container">جاري التحميل...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDb-obRwObo0xOTZAdSWgHZ4p9YQlQq95M",
+            authDomain: "nexus-store-f481d.firebaseapp.com",
+            projectId: "nexus-store-f481d",
+            storageBucket: "nexus-store-f481d.firebasestorage.app",
+            messagingSenderId: "573315219880",
+            appId: "1:573315219880:web:ae5a4ef4e77789a2d81d9d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('p-name').value;
+            const price = Number(document.getElementById('p-price').value);
+            const image = document.getElementById('p-image').value;
+
+            try {
+                await addDoc(collection(db, "products"), { name, price, image });
+                alert("تم إضافة المنتج بنجاح وأصبح ظاهراً في المتجر!");
+                document.getElementById('addProductForm').reset();
+                fetchAdminProducts();
+            } catch (err) {
+                alert("حدث خطأ أثناء الإضافة.");
+            }
+        });
+
+        async function fetchAdminProducts() {
+            const container = document.getElementById('admin-products-container');
+            container.innerHTML = '';
+            const querySnapshot = await getDocs(collection(db, "products"));
+            
+            if (querySnapshot.empty) {
+                container.innerHTML = '<p style="color:#94a3b8;">لا توجد منتجات مسجلة.</p>';
+                return;
+            }
+
+            querySnapshot.forEach((documentSnap) => {
+                const p = documentSnap.data();
+                const id = documentSnap.id;
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <span><b>${p.name}</b> - ${p.price} DZD</span>
+                    <button class="delete-btn" onclick="deleteProduct('${id}')">حذف</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.deleteProduct = async function(id) {
+            if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+                await deleteDoc(doc(db, "products", id));
+                alert("تم الحذف بنجاح!");
+                fetchAdminProducts();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', fetchAdminProducts);
+    </script>
+</body>
+</html>
