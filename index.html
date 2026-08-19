@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Store - المتجر الرقمي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background-color: #0b0f19; color: #f3f4f6; overflow-x: hidden; }
+        
+        header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 5%; z-index: 100;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        .cart-btn {
+            background: linear-gradient(135deg, #6366f1, #a855f7); border: none;
+            padding: 10px 20px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
+        }
+
+        main { max-width: 1200px; margin: 120px auto 50px; padding: 0 20px; }
+        .hero-section { text-align: center; margin-bottom: 50px; }
+        .hero-section h2 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; }
+        .hero-section p { color: #94a3b8; font-size: 1.1rem; }
+
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .product-card {
+            background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px; overflow: hidden; transition: 0.3s ease; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .product-card:hover { transform: translateY(-8px); border-color: rgba(56, 189, 248, 0.4); }
+        .product-img { width: 100%; height: 200px; object-fit: cover; background: #334155; }
+        .product-info { padding: 20px; }
+        .product-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: #f8fafc; }
+        .product-price { font-size: 1.3rem; font-weight: 900; color: #38bdf8; margin-bottom: 15px; }
+
+        .card-actions { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .quantity-control { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 5px 10px; }
+        .qty-btn { background: #334155; border: none; color: white; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .qty-input { background: transparent; border: none; color: white; text-align: center; width: 40px; font-size: 1rem; font-weight: bold; }
+        .buy-now-btn {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; padding: 12px;
+            border-radius: 12px; color: white; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 450px; padding: 30px; border-radius: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #cbd5e1; font-size: 0.9rem; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; }
+        .error-hint { color: #f43f5e; font-size: 0.75rem; margin-top: 4px; display: none; }
+        .submit-order-btn { width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        .success-msg { text-align: center; display: none; }
+        .success-msg i { font-size: 4rem; color: #10b981; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-gem"></i> Nexus Store</div>
+        <button class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
+    </header>
+
+    <main>
+        <div class="hero-section">
+            <h2>اكتشف أحدث المنتجات والعروض</h2>
+            <p>المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!</p>
+        </div>
+
+        <div class="products-grid" id="dynamic-products-container">
+            <p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">جاري تحميل المنتجات...</p>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-content">
+            <div id="order-form-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: #fff;">تأكيد الطلب</h3>
+                    <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form id="checkoutForm" onsubmit="submitOrderToTelegram(event)">
+                    <div class="form-group">
+                        <label>المنتج المطلوب:</label>
+                        <input type="text" id="modal-product-name" readonly style="color: #38bdf8; font-weight: bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية:</label>
+                        <input type="text" id="modal-product-qty" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>الاسم واللقب:</label>
+                        <input type="text" id="client-name" placeholder="أدخل اسمك الكامل الحقيقي..." required minlength="4">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف:</label>
+                        <input type="tel" id="client-phone" placeholder="05 / 06 / 07..." required>
+                        <div class="error-hint" id="phone-error">رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07</div>
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان (الولاية / البلدية):</label>
+                        <textarea id="client-address" rows="2" placeholder="أدخل ولايتك وبلديتك وعنوانك بالتفصيل..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-order-btn">إرسال الطلب نهائياً</button>
+                </form>
+            </div>
+
+            <div class="success-msg" id="successMsg">
+                <i class="fa-solid fa-circle-check"></i>
+                <h3 style="color:#fff;">تم إرسال طلبك بنجاح!</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px;">سنتواصل معك قريباً لتأكيد التوصيل.</p>
+                <button class="submit-order-btn" onclick="closeModal()">حسناً</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDb-obRwObo0xOTZAdSWgHZ4p9YQlQq95M",
+            authDomain: "nexus-store-f481d.firebaseapp.com",
+            projectId: "nexus-store-f481d",
+            storageBucket: "nexus-store-f481d.firebasestorage.app",
+            messagingSenderId: "573315219880",
+            appId: "1:573315219880:web:ae5a4ef4e77789a2d81d9d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let selectedProduct = { name: '', price: 0, qty: 1 };
+
+        async function loadProducts() {
+            const container = document.getElementById('dynamic-products-container');
+            container.innerHTML = '';
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                if (querySnapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.</p>';
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const p = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
+                        <div class="product-info">
+                            <div class="product-title">${p.name}</div>
+                            <div class="product-price">${p.price} DZD</div>
+                        </div>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="qty-btn" onclick="changeQty(this, -1)">-</button>
+                                <input type="text" class="qty-input" value="1" readonly>
+                                <button class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                            </div>
+                            <button class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
+                                <i class="fa-solid fa-bag-shopping"></i> اطلب الآن
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading products:", error);
+                container.innerHTML = '<p style="text-align: center; color: #f43f5e; grid-column: 1/-1;">خطأ في الاتصال بقاعدة البيانات.</p>';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadProducts);
+
+        window.changeQty = function(button, delta) {
+            const input = button.closest('.product-card').querySelector('.qty-input');
+            let val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            input.value = val;
+        }
+
+        window.openOrderModal = function(name, price, button) {
+            const qty = parseInt(button.closest('.product-card').querySelector('.qty-input').value);
+            selectedProduct = { name, price, qty };
+
+            document.getElementById('modal-product-name').value = `${name} (${price * qty} DZD)`;
+            document.getElementById('modal-product-qty').value = qty;
+            document.getElementById('order-form-container').style.display = 'block';
+            document.getElementById('successMsg').style.display = 'none';
+            document.getElementById('checkoutForm').reset();
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('orderModal').classList.remove('active');
+        }
+
+        window.submitOrderToTelegram = function(event) {
+            event.preventDefault();
+            const name = document.getElementById('client-name').value.trim();
+            const phone = document.getElementById('client-phone').value.trim();
+            const address = document.getElementById('client-address').value.trim();
+
+            if (!/^(05|06|07)[0-9]{8}$/.test(phone)) {
+                document.getElementById('phone-error').style.display = 'block';
+                return;
+            }
+            document.getElementById('phone-error').style.display = 'none';
+
+            const message = `🚨 *طلب جديد من المتجر!*\n\n` +
+                            `🛍️ *المنتج:* ${selectedProduct.name}\n` +
+                            `🔢 *الكمية:* ${selectedProduct.qty}\n` +
+                            `💰 *الإجمالي:* ${selectedProduct.price * selectedProduct.qty} DZD\n\n` +
+                            `👤 *الاسم:* ${name}\n` +
+                            `📞 *الهاتف:* ${phone}\n` +
+                            `📍 *العنوان:* ${address}`;
+
+            fetch(`https://api.telegram.org/bot8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: "5640395613", text: message, parse_mode: 'Markdown' })
+            }).then(res => {
+                if (res.ok) {
+                    document.getElementById('order-form-container').style.display = 'none';
+                    document.getElementById('successMsg').style.display = 'block';
+                    let count = parseInt(document.getElementById('cart-count').innerText);
+                    document.getElementById('cart-count').innerText = count + selectedProduct.qty;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
