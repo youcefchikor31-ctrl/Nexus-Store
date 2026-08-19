@@ -572,22 +572,35 @@
                             `📍 *الولاية:* ${wilaya}\n` +
                             `📍 *الدائرة:* ${daira}`;
 
-            // معرّف البوت وقائمة حسابات تيليجرام التي يُرسل إليها كل طلب (كلا الحسابين)
+            // معرّف البوت وقائمة حسابات تيليجرام: يُرسل للحساب الأول، وبعد اكتمال إرساله يُرسل للثاني (تسلسلياً وليس دفعة واحدة)
             const TELEGRAM_BOT_TOKEN = "8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo";
-            const TELEGRAM_CHAT_IDS = ["7737717483", "PUT_SECOND_CHAT_ID_HERE"];
+            const TELEGRAM_CHAT_IDS = ["5640395613", "7737717483"];
 
-            Promise.all(
-                TELEGRAM_CHAT_IDS.map(chatId =>
-                    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
-                    })
-                )
-            ).then(responses => {
-                const allOk = responses.every(res => res.ok);
+            function sendToTelegram(chatId) {
+                return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+                }).then(res => ({ chatId, ok: res.ok, status: res.status }))
+                  .catch(err => ({ chatId, ok: false, error: err }));
+            }
+
+            // إرسال تسلسلي: الحساب الأول أولاً، ثم الحساب الثاني بعد اكتمال الأول
+            (async () => {
+                const results = [];
+                for (const chatId of TELEGRAM_CHAT_IDS) {
+                    const result = await sendToTelegram(chatId);
+                    results.push(result);
+                }
+                return results;
+            })().then(responses => {
+                // نعتبر الطلب ناجحاً إذا وصل لحساب واحد على الأقل (حتى لا يعاود الزبون الإرسال بسبب فشل حساب ثانوي)
+                const anyOk = responses.some(r => r.ok);
+                responses.forEach(r => {
+                    if (!r.ok) console.error(`فشل الإرسال إلى الحساب ${r.chatId}:`, r.status || r.error);
+                });
                 setTimeout(() => {
-                    if (allOk) {
+                    if (anyOk) {
                         // نجاح
                         successMsg.className = 'success-msg success';
                         document.getElementById('t-success-title').innerText = t.successTitle;
