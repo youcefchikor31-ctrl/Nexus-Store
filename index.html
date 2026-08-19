@@ -66,6 +66,23 @@
             background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; padding: 12px;
             border-radius: 12px; color: white; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;
         }
+        .select-control {
+            display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .select-control:has(.select-checkbox:checked) { border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
+        .select-checkbox { width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer; }
+        .cart-summary-item {
+            display: flex; justify-content: space-between; padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.9rem; color: #e2e8f0;
+        }
+        .cart-summary-total {
+            display: flex; justify-content: space-between; padding-top: 10px; margin-top: 4px;
+            font-weight: 800; color: #38bdf8; font-size: 1rem;
+        }
+        #cart-summary { margin-bottom: 15px; background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 10px 14px; max-height: 160px; overflow-y: auto; }
+        .cart-btn { position: relative; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -101,7 +118,7 @@
                 <option value="fr">Français</option>
                 <option value="en">English</option>
             </select>
-            <button class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> <span id="t-cart">السلة</span> (<span id="cart-count">0</span>)</button>
+            <button class="cart-btn" onclick="openCartModal()"><i class="fa-solid fa-cart-shopping"></i> <span id="t-cart">السلة</span> (<span id="cart-count">0</span>)</button>
         </div>
     </header>
 
@@ -128,6 +145,7 @@
                     <h3 id="t-modal-title" style="color: #fff;">تأكيد الطلب</h3>
                     <button type="button" onclick="closeModal()" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <div id="cart-summary"></div>
                 <form id="checkoutForm" onsubmit="submitOrderToTelegram(event)">
                     <div class="form-group">
                         <label id="t-name-label">الاسم واللقب:</label>
@@ -178,52 +196,69 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let selectedProduct = { name: '', price: 0, qty: 1 };
+        let cart = {}; // { productId: { name, price, qty } }
         let productsData = [];
 
-        // قاعمة الولايات والدوائر الجزائرية
+        // قائمة الولايات الجزائرية الـ 58 كاملة (مع الدوائر/البلديات الرئيسية لكل ولاية)
         const algerianWilayas = {
-            "أدرار": ["أدرار", "أراقلة", "أولف", "تيمياوين"],
-            "الشلف": ["الشلف", "بومرداس", "دراق", "سيدي علي بوسيدي"],
-            "الجزائر": ["الجزائر الوسطى", "بن عكنون", "بوزريعة", "الشراقة", "درارية"],
-            "تيارت": ["تيارت", "آفلو", "ثنية الحد", "سيدي بوعلام"],
-            "تلمسان": ["تلمسان", "مغنية", "بني منصور", "سبدو"],
-            "الجلفة": ["الجلفة", "برج بونعامة", "بريان", "القاسم"],
-            "جيجل": ["جيجل", "الأنسام", "بونوار، الميلية"],
-            "سطيف": ["سطيف", "أولاد جديع", "بني عزيز", "عين الدفلى"],
-            "سعيدة": ["سعيدة", "أولاد خليفة", "موسى لاي"],
-            "سكيكدة": ["سكيكدة", "الحرّاش، علي منجلي"],
-            "سيدي بلعباس": ["سيدي بلعباس", "الحمادية", "سيدي خطاب"],
-            "عنابة": ["عنابة", "البطارية، سيدي عمّار"],
-            "قالمة": ["قالمة", "براقي، تاجروت"],
-            "قسنطينة": ["قسنطينة", "الحارة، حامة الباغ"],
-            "المدية": ["المدية", "أولاد يحيى، خمسة"],
-            "مستغانم": ["مستغانم", "الشرارقة، سطاوالي"],
-            "معسكر": ["معسكر", "زاكار، بني ستوت"],
-            "الوادي": ["الوادي", "غردايا، تقرت"],
-            "ورقلة": ["ورقلة", "تقرت، البليدة"],
-            "وهران": ["وهران", "السنية الجديدة"],
-            "الأغواط": ["الأغواط", "القصور"],
-            "البليدة": ["البليدة", "الشرّيعة، شيشة"],
-            "البيض": ["البيض", "عين بن ناحية"],
-            "بسكرة": ["بسكرة", "أولاد جلال", "سيدي خالد"],
-            "بشار": ["بشار", "قصدار"],
-            "بويرة": ["بويرة", "أولاد أحمد"],
-            "تبسة": ["تبسة", "الونزة، عينيه"],
-            "تسمسيلت": ["تسمسيلت", "لعطاء"],
-            "خنشلة": ["خنشلة", "عين الترك"],
-            "عين الدفلى": ["عين الدفلى", "بئر الخاشة"],
-            "عين تيموشنت": ["عين تيموشنت", "سيدي بن عديس"],
-            "غليزان": ["غليزان", "مصفصة"],
-            "غردايا": ["غردايا", "بنورة", "الهنيات"],
-            "إليزي": ["إليزي", "تمنراست"],
-            "جانت": ["جانت"],
-            "لسان": ["ليسان"],
-            "النعامة": ["النعامة", "عين صفرة"],
-            "منيعة": ["منيعة"],
-            "تمنراست": ["تمنراست", "إن قزّام"],
-            "تيندوف": ["تيندوف", "بوجدور"],
-            "تيسيمسيلت": ["تيسيمسيلت", "لحجار"]
+            "أدرار": ["أدرار", "أولف", "رقان", "تيمياوين", "زاوية كنتة"],
+            "الشلف": ["الشلف", "أولاد فارس", "بوقادير", "تنس", "الكريمية"],
+            "الأغواط": ["الأغواط", "أفلو", "حاسي الدلاعة", "القصور"],
+            "أم البواقي": ["أم البواقي", "عين البيضاء", "عين مليلة", "عين البيضاء الشرقية"],
+            "باتنة": ["باتنة", "بريكة", "عين التوتة", "مروانة"],
+            "بجاية": ["بجاية", "أقبو", "أميزور", "سيدي عيش"],
+            "بسكرة": ["بسكرة", "أولاد جلال", "سيدي خالد", "طولقة"],
+            "بشار": ["بشار", "قنادسة", "بني ونيف", "تاغيت"],
+            "البليدة": ["البليدة", "بوفاريك", "موزاية", "العفرون"],
+            "البويرة": ["البويرة", "الأخضرية", "سور الغزلان", "الأسنام"],
+            "تمنراست": ["تمنراست", "عين صالح", "عين قزام", "تين زاواتين"],
+            "تبسة": ["تبسة", "الشريعة", "بئر العاتر", "الونزة"],
+            "تلمسان": ["تلمسان", "مغنية", "الرمشي", "سبدو"],
+            "تيارت": ["تيارت", "أفلو", "سوقر", "مهدية"],
+            "تيزي وزو": ["تيزي وزو", "عزازقة", "بوغني", "الأربعاء ناث إيراثن"],
+            "الجزائر": ["الجزائر الوسطى", "باب الوادي", "بئر مراد رايس", "الحراش", "درارية"],
+            "الجلفة": ["الجلفة", "عين وسارة", "حاسي بحبح", "مسعد"],
+            "جيجل": ["جيجل", "الميلية", "الطاهير", "تاكسنة"],
+            "سطيف": ["سطيف", "العلمة", "عين ولمان", "بابور"],
+            "سعيدة": ["سعيدة", "عين الحجر", "يوب", "سيدي بوبكر"],
+            "سكيكدة": ["سكيكدة", "الحروش", "عزابة", "القل"],
+            "سيدي بلعباس": ["سيدي بلعباس", "تلاغ", "بن باديس", "المصطفى بن ابراهيم"],
+            "عنابة": ["عنابة", "الحجار", "برحال", "البوني"],
+            "قالمة": ["قالمة", "بوشقوف", "هيليوبوليس", "وادي الزناتي"],
+            "قسنطينة": ["قسنطينة", "الخروب", "حامة بوزيان", "ديدوش مراد"],
+            "المدية": ["المدية", "قصر البخاري", "برج بوعريريج", "عين بوسيف"],
+            "مستغانم": ["مستغانم", "عين تادلس", "بوقيراط", "حاسي ماماش"],
+            "المسيلة": ["المسيلة", "بوسعادة", "سيدي عيسى", "عين الملح"],
+            "معسكر": ["معسكر", "غريس", "المحمدية", "سيق"],
+            "ورقلة": ["ورقلة", "حاسي مسعود", "الرويسات", "تماسين"],
+            "وهران": ["وهران", "السانية", "بئر الجير", "عين الترك"],
+            "البيض": ["البيض", "برياس", "بوقطب", "عين الأرنات"],
+            "إليزي": ["إليزي", "برج عمر إدريس", "إن أميناس", "دبداب"],
+            "برج بوعريريج": ["برج بوعريريج", "رأس الوادي", "المنصورة", "الحمادية"],
+            "بومرداس": ["بومرداس", "بودواو", "برج منايل", "زموري"],
+            "الطارف": ["الطارف", "القالة", "بوثلجة", "الذرعان"],
+            "تندوف": ["تندوف", "أم العسل"],
+            "تيسمسيلت": ["تيسمسيلت", "خميستي", "برج بونعامة", "لعرجم"],
+            "الوادي": ["الوادي", "المغير", "جامعة", "الرقيبة"],
+            "خنشلة": ["خنشلة", "بابار", "قايس", "الحامة"],
+            "سوق أهراس": ["سوق أهراس", "سدراتة", "مداوروش", "المشروحة"],
+            "تيبازة": ["تيبازة", "شرشال", "القليعة", "حجوط"],
+            "ميلة": ["ميلة", "فرجيوة", "شلغوم العيد", "تاجنانت"],
+            "عين الدفلى": ["عين الدفلى", "خميس مليانة", "الروينة", "العطاف"],
+            "النعامة": ["النعامة", "عين الصفراء", "مغرار", "صفيصيفة"],
+            "عين تموشنت": ["عين تموشنت", "حمام بوحجر", "بني صاف", "المالح"],
+            "غرداية": ["غرداية", "متليلي", "بنورة", "المنيعة"],
+            "غليزان": ["غليزان", "وادي رهيو", "مازونة", "عمي موسى"],
+            "تيميمون": ["تيميمون", "أولاد سعيد", "أولف"],
+            "برج باجي مختار": ["برج باجي مختار", "تيمياوين"],
+            "أولاد جلال": ["أولاد جلال", "الدوسن", "سيدي خالد"],
+            "بني عباس": ["بني عباس", "تبلبالة", "إقلي"],
+            "إن صالح": ["إن صالح", "فقارة الزوى"],
+            "إن قزام": ["إن قزام", "تين زاواتين"],
+            "تقرت": ["تقرت", "الطيبات", "الحجيرة", "المقارين"],
+            "جانت": ["جانت", "برج الحواس"],
+            "المغير": ["المغير", "سيدي عمران", "المرارة"],
+            "المنيعة": ["المنيعة", "حاسي الفحل"]
         };
 
         // قاموس اللغات
@@ -236,6 +271,9 @@
                 loading: "جاري تحميل المنتجات، يرجى الانتظار...",
                 noProducts: "لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.",
                 buyBtn: "اطلب الآن",
+                selectLabel: "إضافة إلى الطلب",
+                emptyCart: "الرجاء اختيار منتج واحد على الأقل قبل إتمام الطلب.",
+                cartTotal: "الإجمالي",
                 modalTitle: "تأكيد الطلب",
                 prodLabel: "المنتج المطلوب:",
                 qtyLabel: "الكمية:",
@@ -260,6 +298,9 @@
                 loading: "Chargement des produits en cours, veuillez patienter...",
                 noProducts: "Aucun produit disponible pour le moment.",
                 buyBtn: "Commander",
+                selectLabel: "Ajouter à la commande",
+                emptyCart: "Veuillez sélectionner au moins un produit avant de commander.",
+                cartTotal: "Total",
                 modalTitle: "Confirmation de commande",
                 prodLabel: "Produit souhaité:",
                 qtyLabel: "Quantité:",
@@ -284,6 +325,9 @@
                 loading: "Loading products, please wait...",
                 noProducts: "No products available at the moment.",
                 buyBtn: "Buy Now",
+                selectLabel: "Add to order",
+                emptyCart: "Please select at least one product before checking out.",
+                cartTotal: "Total",
                 modalTitle: "Confirm Order",
                 prodLabel: "Selected Product:",
                 qtyLabel: "Quantity:",
@@ -385,6 +429,8 @@
             productsData.forEach((p) => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
+                card.dataset.productId = p.id;
+                const isChecked = !!cart[p.id];
                 card.innerHTML = `
                     <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
                     <div class="product-info">
@@ -394,12 +440,14 @@
                     <div class="card-actions">
                         <div class="quantity-control">
                             <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
-                            <input type="text" class="qty-input" value="1" readonly>
+                            <input type="text" class="qty-input" value="${isChecked ? cart[p.id].qty : 1}" readonly>
                             <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
                         </div>
-                        <button type="button" class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
-                            <i class="fa-solid fa-bag-shopping"></i> ${t.buyBtn}
-                        </button>
+                        <label class="select-control">
+                            <input type="checkbox" class="select-checkbox" ${isChecked ? 'checked' : ''}
+                                onchange='toggleCartItem(this, ${JSON.stringify(p.id)}, ${JSON.stringify(p.name)}, ${p.price})'>
+                            <span>${t.selectLabel}</span>
+                        </label>
                     </div>
                 `;
                 container.appendChild(card);
@@ -409,16 +457,66 @@
         window.addEventListener('DOMContentLoaded', loadProducts);
 
         window.changeQty = function(button, delta) {
-            const input = button.closest('.product-card').querySelector('.qty-input');
+            const card = button.closest('.product-card');
+            const productId = card.dataset.productId;
+            const input = card.querySelector('.qty-input');
             let val = parseInt(input.value) + delta;
             if (val < 1) val = 1;
             input.value = val;
+            // إذا كان المنتج محدداً مسبقاً، حدّث الكمية في السلة مباشرة
+            if (cart[productId]) {
+                cart[productId].qty = val;
+                updateCartCount();
+            }
         }
 
-        window.openOrderModal = function(name, price, button) {
-            const qty = parseInt(button.closest('.product-card').querySelector('.qty-input').value);
-            selectedProduct = { name, price, qty };
+        window.toggleCartItem = function(checkbox, id, name, price) {
+            const card = checkbox.closest('.product-card');
+            const qty = parseInt(card.querySelector('.qty-input').value);
+            if (checkbox.checked) {
+                cart[id] = { name, price, qty };
+            } else {
+                delete cart[id];
+            }
+            updateCartCount();
+        }
 
+        function updateCartCount() {
+            const totalQty = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-count').innerText = totalQty;
+        }
+
+        function renderCartSummary() {
+            const container = document.getElementById('cart-summary');
+            const currentLang = document.getElementById('langSwitcher').value;
+            const t = translations[currentLang];
+            const items = Object.values(cart);
+            let total = 0;
+            const rows = items.map(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                return `<div class="cart-summary-item"><span>${item.name} × ${item.qty}</span><span>${sub} DZD</span></div>`;
+            }).join('');
+            container.innerHTML = rows + `<div class="cart-summary-total"><span>${t.cartTotal}</span><span>${total} DZD</span></div>`;
+        }
+
+        function resetCartUI() {
+            cart = {};
+            updateCartCount();
+            document.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.qty-input').forEach(input => input.value = 1);
+        }
+
+        window.openCartModal = function() {
+            const currentLang = document.getElementById('langSwitcher').value;
+            const t = translations[currentLang];
+
+            if (Object.keys(cart).length === 0) {
+                alert(t.emptyCart);
+                return;
+            }
+
+            renderCartSummary();
             document.getElementById('order-form-container').style.display = 'block';
             document.getElementById('successMsg').style.display = 'none';
             document.getElementById('checkoutForm').reset();
@@ -457,31 +555,48 @@
             document.getElementById('t-success-title').innerText = t.processingTitle;
             document.getElementById('t-success-desc').innerText = t.processingDesc;
 
+            // بناء قائمة المنتجات المختارة والمجموع الكلي
+            const items = Object.values(cart);
+            let total = 0;
+            const itemsText = items.map(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                return `• ${item.name} (الكمية: ${item.qty}) = ${sub} DZD`;
+            }).join('\n');
+
             const message = `🚨 *طلب جديد من المتجر!*\n\n` +
-                            `🛍️ *المنتج:* ${selectedProduct.name}\n` +
-                            `🔢 *الكمية:* ${selectedProduct.qty}\n` +
-                            `💰 *الإجمالي:* ${selectedProduct.price * selectedProduct.qty} DZD\n\n` +
+                            `🛍️ *المنتجات:*\n${itemsText}\n\n` +
+                            `💰 *الإجمالي الكلي:* ${total} DZD\n\n` +
                             `👤 *الاسم:* ${name}\n` +
                             `📞 *الهاتف:* ${phone}\n` +
                             `📍 *الولاية:* ${wilaya}\n` +
                             `📍 *الدائرة:* ${daira}`;
 
-            fetch(`https://api.telegram.org/bot8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: "7737717483", text: message, parse_mode: 'Markdown' })
-            }).then(res => {
+            // معرّف البوت وقائمة حسابات تيليجرام التي يُرسل إليها كل طلب (كلا الحسابين)
+            const TELEGRAM_BOT_TOKEN = "8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo";
+            const TELEGRAM_CHAT_IDS = ["7737717483", "PUT_SECOND_CHAT_ID_HERE"];
+
+            Promise.all(
+                TELEGRAM_CHAT_IDS.map(chatId =>
+                    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+                    })
+                )
+            ).then(responses => {
+                const allOk = responses.every(res => res.ok);
                 setTimeout(() => {
-                    if (res.ok) {
+                    if (allOk) {
                         // نجاح
                         successMsg.className = 'success-msg success';
                         document.getElementById('t-success-title').innerText = t.successTitle;
                         document.getElementById('t-success-desc').innerText = t.successDesc;
                         document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-                        
-                        let count = parseInt(document.getElementById('cart-count').innerText);
-                        document.getElementById('cart-count').innerText = count + selectedProduct.qty;
-                        
+
+                        // إعادة تصفير السلة والاختيارات بعد نجاح الإرسال
+                        resetCartUI();
+
                         // إضافة زر الإغلاق
                         const closeBtn = document.createElement('button');
                         closeBtn.type = 'button';
