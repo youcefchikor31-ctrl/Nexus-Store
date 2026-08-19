@@ -19,6 +19,12 @@
             padding: 15px 5%; z-index: 100;
         }
         .logo { font-size: 1.5rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        
+        .header-controls { display: flex; align-items: center; gap: 15px; }
+        .lang-select {
+            background: #1e293b; color: white; border: 1px solid #334155;
+            padding: 8px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; outline: none;
+        }
         .cart-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7); border: none;
             padding: 10px 20px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
@@ -28,6 +34,18 @@
         .hero-section { text-align: center; margin-bottom: 50px; }
         .hero-section h2 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; }
         .hero-section p { color: #94a3b8; font-size: 1.1rem; }
+
+        /* مؤشر التحميل الدارئ (Spinner) */
+        .loading-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            grid-column: 1 / -1; padding: 50px 0; gap: 15px;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid rgba(56, 189, 248, 0.2);
+            border-top-color: #38bdf8; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
         .product-card {
@@ -68,58 +86,70 @@
 <body>
 
     <header>
-        <div class="logo"><i class="fa-solid fa-gem"></i> Nexus Store</div>
-        <button class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
+        <div class="logo"><i class="fa-solid fa-gem"></i> <span id="t-store-name">Nexus Store</span></div>
+        <div class="header-controls">
+            <select class="lang-select" id="langSwitcher" onchange="changeLanguage(this.value)">
+                <option value="ar">العربية</option>
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+            </select>
+            <button class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> <span id="t-cart">السلة</span> (<span id="cart-count">0</span>)</button>
+        </div>
     </header>
 
     <main>
         <div class="hero-section">
-            <h2>اكتشف أحدث المنتجات والعروض</h2>
-            <p>المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!</p>
+            <h2 id="t-hero-title">اكتشف أحدث المنتجات والعروض</h2>
+            <p id="t-hero-desc">المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!</p>
         </div>
 
         <div class="products-grid" id="dynamic-products-container">
-            <p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">جاري تحميل المنتجات...</p>
+            <!-- عنصر التحميل التلقائي -->
+            <div class="loading-container" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p id="t-loading" style="color: #94a3b8;">جاري تحميل المنتجات، يرجى الانتظار...</p>
+            </div>
         </div>
     </main>
 
+    <!-- نموذج الطلب -->
     <div class="modal-overlay" id="orderModal">
         <div class="modal-content">
             <div id="order-form-container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="color: #fff;">تأكيد الطلب</h3>
+                    <h3 id="t-modal-title" style="color: #fff;">تأكيد الطلب</h3>
                     <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <form id="checkoutForm" onsubmit="submitOrderToTelegram(event)">
                     <div class="form-group">
-                        <label>المنتج المطلوب:</label>
+                        <label id="t-prod-label">المنتج المطلوب:</label>
                         <input type="text" id="modal-product-name" readonly style="color: #38bdf8; font-weight: bold;">
                     </div>
                     <div class="form-group">
-                        <label>الكمية:</label>
+                        <label id="t-qty-label">الكمية:</label>
                         <input type="text" id="modal-product-qty" readonly>
                     </div>
                     <div class="form-group">
-                        <label>الاسم واللقب:</label>
-                        <input type="text" id="client-name" placeholder="أدخل اسمك الكامل الحقيقي..." required minlength="4">
+                        <label id="t-name-label">الاسم واللقب:</label>
+                        <input type="text" id="client-name" placeholder="أدخل اسمك الكامل..." required minlength="4">
                     </div>
                     <div class="form-group">
-                        <label>رقم الهاتف:</label>
+                        <label id="t-phone-label">رقم الهاتف:</label>
                         <input type="tel" id="client-phone" placeholder="05 / 06 / 07..." required>
                         <div class="error-hint" id="phone-error">رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07</div>
                     </div>
                     <div class="form-group">
-                        <label>العنوان (الولاية / البلدية):</label>
-                        <textarea id="client-address" rows="2" placeholder="أدخل ولايتك وبلديتك وعنوانك بالتفصيل..." required></textarea>
+                        <label id="t-address-label">العنوان (الولاية / البلدية):</label>
+                        <textarea id="client-address" rows="2" placeholder="أدخل عنوانك بالتفصيل..." required></textarea>
                     </div>
-                    <button type="submit" class="submit-order-btn">إرسال الطلب نهائياً</button>
+                    <button type="submit" class="submit-order-btn" id="t-submit-btn">إرسال الطلب نهائياً</button>
                 </form>
             </div>
 
             <div class="success-msg" id="successMsg">
                 <i class="fa-solid fa-circle-check"></i>
-                <h3 style="color:#fff;">تم إرسال طلبك بنجاح!</h3>
-                <p style="color: #94a3b8; margin-bottom: 20px;">سنتواصل معك قريباً لتأكيد التوصيل.</p>
+                <h3 id="t-success-title" style="color:#fff;">تم إرسال طلبك بنجاح!</h3>
+                <p id="t-success-desc" style="color: #94a3b8; margin-bottom: 20px;">سنتواصل معك قريباً لتأكيد التوصيل.</p>
                 <button class="submit-order-btn" onclick="closeModal()">حسناً</button>
             </div>
         </div>
@@ -142,43 +172,143 @@
         const db = getFirestore(app);
 
         let selectedProduct = { name: '', price: 0, qty: 1 };
+        let productsData = [];
+
+        // قاموس اللغات
+        const translations = {
+            ar: {
+                storeName: "Nexus Store",
+                cart: "السلة",
+                heroTitle: "اكتشف أحدث المنتجات والعروض",
+                heroDesc: "المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!",
+                loading: "جاري تحميل المنتجات، يرجى الانتظار...",
+                noProducts: "لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.",
+                buyBtn: "اطلب الآن",
+                modalTitle: "تأكيد الطلب",
+                prodLabel: "المنتج المطلوب:",
+                qtyLabel: "الكمية:",
+                nameLabel: "الاسم واللقب:",
+                phoneLabel: "رقم الهاتف:",
+                addressLabel: "العنوان (الولاية / البلدية):",
+                submitBtn: "إرسال الطلب نهائياً",
+                successTitle: "تم إرسال طلبك بنجاح!",
+                successDesc: "سنتواصل معك قريباً لتأكيد التوصيل.",
+                errorPhone: "رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07"
+            },
+            fr: {
+                storeName: "Nexus Store",
+                cart: "Panier",
+                heroTitle: "Découvrez les derniers produits",
+                heroDesc: "Les produits ci-dessous sont chargés directement depuis la base de données !",
+                loading: "Chargement des produits en cours, veuillez patienter...",
+                noProducts: "Aucun produit disponible pour le moment.",
+                buyBtn: "Commander",
+                modalTitle: "Confirmation de commande",
+                prodLabel: "Produit souhaité:",
+                qtyLabel: "Quantité:",
+                nameLabel: "Nom et Prénom:",
+                phoneLabel: "Numéro de téléphone:",
+                addressLabel: "Adresse (Wilaya / Commune):",
+                submitBtn: "Envoyer la commande",
+                successTitle: "Commande envoyée avec succès !",
+                successDesc: "Nous vous contacterons bientôt pour confirmer.",
+                errorPhone: "Le numéro doit comporter 10 chiffres (05, 06, 07)"
+            },
+            en: {
+                storeName: "Nexus Store",
+                cart: "Cart",
+                heroTitle: "Discover Latest Products & Deals",
+                heroDesc: "Products below are fetched directly from the database!",
+                loading: "Loading products, please wait...",
+                noProducts: "No products available at the moment.",
+                buyBtn: "Buy Now",
+                modalTitle: "Confirm Order",
+                prodLabel: "Selected Product:",
+                qtyLabel: "Quantity:",
+                nameLabel: "Full Name:",
+                phoneLabel: "Phone Number:",
+                addressLabel: "Address (State / City):",
+                submitBtn: "Submit Order",
+                successTitle: "Order Sent Successfully!",
+                successDesc: "We will contact you soon to confirm delivery.",
+                errorPhone: "Phone number must be 10 digits starting with 05, 06, or 07"
+            }
+        };
+
+        window.changeLanguage = function(lang) {
+            const t = translations[lang];
+            document.documentElement.lang = lang;
+            document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
+            document.getElementById('t-store-name').innerText = t.storeName;
+            document.getElementById('t-cart').innerText = t.cart;
+            document.getElementById('t-hero-title').innerText = t.heroTitle;
+            document.getElementById('t-hero-desc').innerText = t.heroDesc;
+            document.getElementById('t-modal-title').innerText = t.modalTitle;
+            document.getElementById('t-prod-label').innerText = t.prodLabel;
+            document.getElementById('t-qty-label').innerText = t.qtyLabel;
+            document.getElementById('t-name-label').innerText = t.nameLabel;
+            document.getElementById('t-phone-label').innerText = t.phoneLabel;
+            document.getElementById('t-address-label').innerText = t.addressLabel;
+            document.getElementById('t-submit-btn').innerText = t.submitBtn;
+            document.getElementById('t-success-title').innerText = t.successTitle;
+            document.getElementById('t-success-desc').innerText = t.successDesc;
+            document.getElementById('phone-error').innerText = t.errorPhone;
+
+            const loadingText = document.getElementById('t-loading');
+            if (loadingText) loadingText.innerText = t.loading;
+
+            renderProducts();
+        }
 
         async function loadProducts() {
-            const container = document.getElementById('dynamic-products-container');
-            container.innerHTML = '';
             try {
                 const querySnapshot = await getDocs(collection(db, "products"));
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.</p>';
-                    return;
-                }
+                productsData = [];
                 querySnapshot.forEach((doc) => {
-                    const p = doc.data();
-                    const card = document.createElement('div');
-                    card.className = 'product-card';
-                    card.innerHTML = `
-                        <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
-                        <div class="product-info">
-                            <div class="product-title">${p.name}</div>
-                            <div class="product-price">${p.price} DZD</div>
-                        </div>
-                        <div class="card-actions">
-                            <div class="quantity-control">
-                                <button class="qty-btn" onclick="changeQty(this, -1)">-</button>
-                                <input type="text" class="qty-input" value="1" readonly>
-                                <button class="qty-btn" onclick="changeQty(this, 1)">+</button>
-                            </div>
-                            <button class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
-                                <i class="fa-solid fa-bag-shopping"></i> اطلب الآن
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(card);
+                    productsData.push({ id: doc.id, ...doc.data() });
                 });
+                renderProducts();
             } catch (error) {
                 console.error("Error loading products:", error);
+                const container = document.getElementById('dynamic-products-container');
                 container.innerHTML = '<p style="text-align: center; color: #f43f5e; grid-column: 1/-1;">خطأ في الاتصال بقاعدة البيانات.</p>';
             }
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('dynamic-products-container');
+            const currentLang = document.getElementById('langSwitcher').value;
+            const t = translations[currentLang];
+
+            if (productsData.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">${t.noProducts}</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            productsData.forEach((p) => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
+                    <div class="product-info">
+                        <div class="product-title">${p.name}</div>
+                        <div class="product-price">${p.price} DZD</div>
+                    </div>
+                    <div class="card-actions">
+                        <div class="quantity-control">
+                            <button class="qty-btn" onclick="changeQty(this, -1)">-</button>
+                            <input type="text" class="qty-input" value="1" readonly>
+                            <button class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                        </div>
+                        <button class="buy-now-btn" onclick='openOrderModal(${JSON.stringify(p.name)}, ${p.price}, this)'>
+                            <i class="fa-solid fa-bag-shopping"></i> ${t.buyBtn}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         window.addEventListener('DOMContentLoaded', loadProducts);
