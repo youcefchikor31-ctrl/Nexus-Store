@@ -130,14 +130,6 @@
                 </div>
                 <form id="checkoutForm" onsubmit="submitOrderToTelegram(event)">
                     <div class="form-group">
-                        <label id="t-prod-label">المنتج المطلوب:</label>
-                        <input type="text" id="modal-product-name" readonly style="color: #38bdf8; font-weight: bold;">
-                    </div>
-                    <div class="form-group">
-                        <label id="t-qty-label">الكمية:</label>
-                        <input type="text" id="modal-product-qty" readonly>
-                    </div>
-                    <div class="form-group">
                         <label id="t-name-label">الاسم واللقب:</label>
                         <input type="text" id="client-name" placeholder="أدخل اسمك الكامل..." required minlength="4">
                     </div>
@@ -320,8 +312,6 @@
             document.getElementById('t-hero-title').innerText = t.heroTitle;
             document.getElementById('t-hero-desc').innerText = t.heroDesc;
             document.getElementById('t-modal-title').innerText = t.modalTitle;
-            document.getElementById('t-prod-label').innerText = t.prodLabel;
-            document.getElementById('t-qty-label').innerText = t.qtyLabel;
             document.getElementById('t-name-label').innerText = t.nameLabel;
             document.getElementById('t-phone-label').innerText = t.phoneLabel;
             document.getElementById('t-wilaya-label').innerText = t.wilayaLabel;
@@ -429,8 +419,6 @@
             const qty = parseInt(button.closest('.product-card').querySelector('.qty-input').value);
             selectedProduct = { name, price, qty };
 
-            document.getElementById('modal-product-name').value = `${name} (${price * qty} DZD)`;
-            document.getElementById('modal-product-qty').value = qty;
             document.getElementById('order-form-container').style.display = 'block';
             document.getElementById('successMsg').style.display = 'none';
             document.getElementById('checkoutForm').reset();
