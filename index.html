@@ -572,33 +572,15 @@
                             `📍 *الولاية:* ${wilaya}\n` +
                             `📍 *الدائرة:* ${daira}`;
 
-            // معرّف البوت وقائمة حسابات تيليجرام: يُرسل للحساب الأول، وبعد اكتمال إرساله يُرسل للثاني (تسلسلياً وليس دفعة واحدة)
-            const TELEGRAM_BOT_TOKEN = "8701140722:AAFIl1umf8x-23P7LNJUoNDowwreo8yYWGo";
-            const TELEGRAM_CHAT_IDS = ["5640395613", "7737717483"];
+            // الوسيط الآمن على Cloudflare Worker: يحتفظ بتوكن تيليجرام كسرّ ولا يظهر أبداً بكود الموقع
+            const WORKER_URL = "https://bitter-tooth-fc85nexus-store-relay.youcefchikor31.workers.dev";
 
-            function sendToTelegram(chatId) {
-                return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
-                }).then(res => ({ chatId, ok: res.ok, status: res.status }))
-                  .catch(err => ({ chatId, ok: false, error: err }));
-            }
-
-            // إرسال تسلسلي: الحساب الأول أولاً، ثم الحساب الثاني بعد اكتمال الأول
-            (async () => {
-                const results = [];
-                for (const chatId of TELEGRAM_CHAT_IDS) {
-                    const result = await sendToTelegram(chatId);
-                    results.push(result);
-                }
-                return results;
-            })().then(responses => {
-                // نعتبر الطلب ناجحاً إذا وصل لحساب واحد على الأقل (حتى لا يعاود الزبون الإرسال بسبب فشل حساب ثانوي)
-                const anyOk = responses.some(r => r.ok);
-                responses.forEach(r => {
-                    if (!r.ok) console.error(`فشل الإرسال إلى الحساب ${r.chatId}:`, r.status || r.error);
-                });
+            fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            }).then(res => res.json()).then(data => {
+                const anyOk = !!data.ok;
                 setTimeout(() => {
                     if (anyOk) {
                         // نجاح
