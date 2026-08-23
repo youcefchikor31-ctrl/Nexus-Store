@@ -724,16 +724,17 @@
             const itemsText = items.map(item => {
                 const sub = item.price * item.qty;
                 total += sub;
-                return `• ${item.name} (الكمية: ${item.qty}) = ${sub} DZD`;
+                return `- ${item.name} (الكمية: ${item.qty}) = ${sub} DZD`;
             }).join('\n');
 
-            const message = `🚨 *طلب جديد من متجر Samir Store!*\n\n` +
-                            `🛍️ *المنتجات:*\n${itemsText}\n\n` +
-                            `💰 *الإجمالي الكلي:* ${total} DZD\n\n` +
-                            `👤 *الاسم:* ${name}\n` +
-                            `📞 *الهاتف:* ${phone}\n` +
-                            `📍 *الولاية:* ${wilaya}\n` +
-                            `📍 *الدائرة:* ${daira}`;
+            // نص عادي خالص بدون أي تنسيق ماركداون (مثل النجوم أو الأقواس)
+            const message = `طلب جديد من متجر Samir Store\n\n` +
+                            `المنتجات:\n${itemsText}\n\n` +
+                            `الإجمالي الكلي: ${total} DZD\n\n` +
+                            `الاسم: ${name}\n` +
+                            `الهاتف: ${phone}\n` +
+                            `الولاية: ${wilaya}\n` +
+                            `الدائرة: ${daira}`;
 
             const BOT_TOKEN = "8701140722:AAEMw7BCjIcoHaDGEUCX-fFNOiZOIJQTYzQ";
             const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; 
@@ -745,8 +746,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: chatId,
-                            text: message,
-                            parse_mode: 'Markdown'
+                            text: message
+                            // تم حذف خاصية parse_mode تماماً ليصبح الإرسال نصاً عادياً 100%
                         })
                     }).then(res => res.json())
                 );
