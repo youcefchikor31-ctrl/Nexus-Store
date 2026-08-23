@@ -79,7 +79,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* شبكة المنتجات: 3 أعمدة */
         .products-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -172,7 +171,6 @@
             color: white;
         }
 
-        /* زر "عرض المزيد" */
         .load-more-container {
             text-align: center;
             margin-top: 40px;
@@ -197,7 +195,6 @@
             border-color: #38bdf8;
         }
 
-        /* الفوتر مع اسم المطور */
         footer {
             background: rgba(15, 23, 42, 0.95);
             border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -221,7 +218,6 @@
             text-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
         }
 
-        /* عنصر الصورة الطائرة نحو السلة */
         .flying-item {
             position: fixed;
             z-index: 9999;
@@ -232,7 +228,6 @@
             box-shadow: 0 5px 15px rgba(56, 189, 248, 0.5);
         }
 
-        /* تلخيص السلة */
         .cart-summary-item {
             display: flex; justify-content: space-between; padding: 6px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.9rem; color: #e2e8f0;
@@ -280,7 +275,6 @@
         </div>
     </header>
 
-    <!-- زر السلة العائمة على اليسار -->
     <button class="floating-cart-btn" id="floatingCartBtn" onclick="openCartModal()">
         <i class="fa-solid fa-cart-shopping"></i>
         <div class="cart-badge" id="cart-count">0</div>
@@ -299,7 +293,6 @@
             </div>
         </div>
 
-        <!-- زر المزيد -->
         <div class="load-more-container" id="loadMoreContainer" style="display: none;">
             <button class="load-more-btn" onclick="loadMoreProducts()">
                 <i class="fa-solid fa-rotate"></i> <span id="t-load-more">عرض المزيد من المنتجات</span>
@@ -307,12 +300,10 @@
         </div>
     </main>
 
-    <!-- الفوتر مع اسم المطور -->
     <footer>
         <p>© 2026 Samir Store. All rights reserved. | Developed by <a href="#" class="developer-tag">@chikor</a></p>
     </footer>
 
-    <!-- نموذج الطلب -->
     <div class="modal-overlay" id="orderModal">
         <div class="modal-content">
             <div id="order-form-container">
@@ -454,7 +445,7 @@
                 wilayaLabel: "الولاية:",
                 dairaLabel: "الدائرة / البلدية:",
                 submitBtn: "إرسال الطلب نهائياً",
-                processingTitle: "جاري معالجة طلبك...",
+                processingTitle: "جاري إرسال الطلب...",
                 processingDesc: "يرجى الانتظار...",
                 successTitle: "تم إرسال طلبك بنجاح! ✓",
                 successDesc: "سنتواصل معك قريباً لتأكيد التوصيل.",
@@ -479,7 +470,7 @@
                 wilayaLabel: "Wilaya:",
                 dairaLabel: "Daïra/Commune:",
                 submitBtn: "Envoyer la commande",
-                processingTitle: "Traitement de votre commande...",
+                processingTitle: "Envoi de la commande...",
                 processingDesc: "Veuillez patienter...",
                 successTitle: "Commande envoyée avec succès ! ✓",
                 successDesc: "Nous vous contacterons bientôt pour confirmer.",
@@ -504,7 +495,7 @@
                 wilayaLabel: "State:",
                 dairaLabel: "District/City:",
                 submitBtn: "Submit Order",
-                processingTitle: "Processing your order...",
+                processingTitle: "Sending order...",
                 processingDesc: "Please wait...",
                 successTitle: "Order Sent Successfully! ✓",
                 successDesc: "We will contact you soon to confirm delivery.",
@@ -662,8 +653,6 @@
                 cart[id] = { name, price, qty, image };
                 card.classList.add('in-cart');
                 button.innerHTML = `<i class="fa-solid fa-check"></i> <span>${t.inCart}</span>`;
-
-                // تشغيل تأثير انيميشن الطيران والاهتزاز
                 triggerFlyToCart(event.target, image);
             } else {
                 delete cart[id];
@@ -676,8 +665,6 @@
         function triggerFlyToCart(targetElement, imgSrc) {
             const cartBtn = document.getElementById('floatingCartBtn');
             const cartRect = cartBtn.getBoundingClientRect();
-            
-            // تحديد نقطة البداية (من مكان زر الضغط)
             const targetRect = targetElement.getBoundingClientRect();
             
             const flyer = document.createElement('img');
@@ -689,7 +676,6 @@
             flyer.style.height = '50px';
             document.body.appendChild(flyer);
 
-            // تحريك الصورة نحو السلة مع تقليص حجمها
             setTimeout(() => {
                 flyer.style.left = `${cartRect.left + cartRect.width / 2 - 10}px`;
                 flyer.style.top = `${cartRect.top + cartRect.height / 2 - 10}px`;
@@ -698,7 +684,6 @@
                 flyer.style.opacity = '0.3';
             }, 30);
 
-            // اهتزاز السلة عند وصول العنصر
             setTimeout(() => {
                 flyer.remove();
                 cartBtn.classList.add('shake');
@@ -761,6 +746,7 @@
             document.getElementById('orderModal').classList.remove('active');
         }
 
+        // إرسال الطلب كتابياً بشكل فائق السرعة دون صور
         window.submitOrderToTelegram = async function(event) {
             event.preventDefault();
             
@@ -780,7 +766,7 @@
             successMsg.style.display = 'block';
             successMsg.className = 'success-msg loading';
             
-            const currentLang = document.getElementById('langSwitcher').value;
+            const currentLang = document.getElementById('langSwitcher'].value;
             const t = translations[currentLang];
             
             document.getElementById('t-success-title').innerText = t.processingTitle;
@@ -805,17 +791,15 @@
             const BOT_TOKEN = "8701140722:AAEMw7BCjIcoHaDGEUCX-fFNOiZOIJQTYzQ";
             const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; 
             
-            const firstItemImage = items.length > 0 ? items[0].image : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80";
-
             try {
+                // استخدام sendMessage النصية الخفيفة والفورية بدلاً من إرسال الصور
                 const promises = CHAT_IDS.map(chatId => 
-                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: chatId,
-                            photo: firstItemImage,
-                            caption: message,
+                            text: message,
                             parse_mode: 'Markdown'
                         })
                     }).then(res => res.json())
@@ -846,7 +830,7 @@
                     } else {
                         throw new Error("One or more messages failed");
                     }
-                }, 2000);
+                }, 800);
 
             } catch (err) {
                 console.error(err);
@@ -869,7 +853,7 @@
                     const oldBtn = document.querySelector('#successMsg .submit-order-btn');
                     if (oldBtn) oldBtn.remove();
                     document.getElementById('successMsg').appendChild(retryBtn);
-                }, 2000);
+                }, 1000);
             }
         }
     </script>
