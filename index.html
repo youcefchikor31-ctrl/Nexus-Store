@@ -26,7 +26,6 @@
             padding: 8px 14px; border-radius: 20px; font-weight: 600; cursor: pointer; outline: none;
         }
 
-        /* سلة عائمة على اليسار بتصميم دائري متحرك */
         .floating-cart-btn {
             position: fixed; bottom: 30px; left: 30px;
             width: 65px; height: 65px;
@@ -40,7 +39,6 @@
         }
         .floating-cart-btn:hover { transform: scale(1.1); }
 
-        /* تأثير الاهتزاز للسلة */
         @keyframes shakeCart {
             0% { transform: scale(1) rotate(0deg); }
             20% { transform: scale(1.2) rotate(-10deg); }
@@ -746,7 +744,6 @@
             document.getElementById('orderModal').classList.remove('active');
         }
 
-        // إرسال الطلب كتابياً بشكل فائق السرعة دون صور
         window.submitOrderToTelegram = async function(event) {
             event.preventDefault();
             
@@ -766,7 +763,7 @@
             successMsg.style.display = 'block';
             successMsg.className = 'success-msg loading';
             
-            const currentLang = document.getElementById('langSwitcher'].value;
+            const currentLang = document.getElementById('langSwitcher').value;
             const t = translations[currentLang];
             
             document.getElementById('t-success-title').innerText = t.processingTitle;
@@ -792,7 +789,6 @@
             const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; 
             
             try {
-                // استخدام sendMessage النصية الخفيفة والفورية بدلاً من إرسال الصور
                 const promises = CHAT_IDS.map(chatId => 
                     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
