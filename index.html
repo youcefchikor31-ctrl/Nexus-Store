@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir Store</title>
+    <title>Nexus Store - المتجر الرقمي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -111,7 +111,7 @@
 <body>
 
     <header>
-        <div class="logo"><i class="fa-solid fa-gem"></i> <span id="t-store-name">Samir Store</span></div>
+        <div class="logo"><i class="fa-solid fa-gem"></i> <span id="t-store-name">Nexus Store</span></div>
         <div class="header-controls">
             <select class="lang-select" id="langSwitcher" onchange="changeLanguage(this.value)">
                 <option value="ar">العربية</option>
@@ -264,7 +264,7 @@
         // قاموس اللغات
         const translations = {
             ar: {
-                storeName: "Samir Store",
+                storeName: "Nexus Store",
                 cart: "السلة",
                 heroTitle: "اكتشف أحدث المنتجات والعروض",
                 heroDesc: "المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!",
@@ -291,7 +291,7 @@
                 errorPhone: "رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07"
             },
             fr: {
-                storeName: "Samir Store",
+                storeName: "Nexus Store",
                 cart: "Panier",
                 heroTitle: "Découvrez les derniers produits",
                 heroDesc: "Les produits ci-dessous sont chargés directement depuis la base de données !",
@@ -318,7 +318,7 @@
                 errorPhone: "Le numéro doit comporter 10 chiffres (05, 06, 07)"
             },
             en: {
-                storeName: "Samir Store",
+                storeName: "Nexus Store",
                 cart: "Cart",
                 heroTitle: "Discover Latest Products & Deals",
                 heroDesc: "Products below are fetched directly from the database!",
@@ -401,7 +401,7 @@
 
         async function loadProducts() {
             try {
-                const querySnapshot = await getDocs(collection(db, "samirProducts"));
+                const querySnapshot = await getDocs(collection(db, "products"));
                 productsData = [];
                 querySnapshot.forEach((doc) => {
                     productsData.push({ id: doc.id, ...doc.data() });
@@ -573,7 +573,7 @@
                             `📍 *الدائرة:* ${daira}`;
 
             // الوسيط الآمن على Cloudflare Worker: يحتفظ بتوكن تيليجرام كسرّ ولا يظهر أبداً بكود الموقع
-            const WORKER_URL = "https://thint-wildflower-19ba.youcefchikor31.workers.dev";
+            const WORKER_URL = "https://bitter-tooth-fc85nexus-store-relay.youcefchikor31.workers.dev";
 
             fetch(WORKER_URL, {
                 method: 'POST',
