@@ -9,7 +9,7 @@
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background-color: #0b0f19; color: #f3f4f6; overflow-x: hidden; }
+        body { background-color: #0b0f19; color: #f3f4f6; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
         header {
             position: fixed; top: 0; left: 0; width: 100%;
@@ -25,15 +25,45 @@
             background: #1e293b; color: white; border: 1px solid #334155;
             padding: 8px 14px; border-radius: 20px; font-weight: 600; cursor: pointer; outline: none;
         }
-        .cart-btn {
-            background: linear-gradient(135deg, #6366f1, #a855f7); border: none;
-            padding: 10px 22px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
-            position: relative; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            transition: 0.2s;
-        }
-        .cart-btn:hover { transform: scale(1.03); }
 
-        main { max-width: 1200px; margin: 120px auto 60px; padding: 0 20px; }
+        /* سلة عائمة على اليسار بتصميم دائري متحرك */
+        .floating-cart-btn {
+            position: fixed; bottom: 30px; left: 30px;
+            width: 65px; height: 65px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border: none; border-radius: 50%;
+            color: white; font-size: 1.4rem;
+            cursor: pointer; z-index: 999;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .floating-cart-btn:hover { transform: scale(1.1); }
+
+        /* تأثير الاهتزاز للسلة */
+        @keyframes shakeCart {
+            0% { transform: scale(1) rotate(0deg); }
+            20% { transform: scale(1.2) rotate(-10deg); }
+            40% { transform: scale(1.2) rotate(10deg); }
+            60% { transform: scale(1.2) rotate(-10deg); }
+            80% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .floating-cart-btn.shake {
+            animation: shakeCart 0.5s ease-in-out;
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+        }
+
+        .cart-badge {
+            position: absolute; top: 5px; right: 5px;
+            background: #f43f5e; color: white; font-size: 0.75rem; font-weight: 800;
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #0b0f19;
+        }
+
+        main { max-width: 1200px; margin: 120px auto 60px; padding: 0 20px; flex: 1; width: 100%; }
         .hero-section { text-align: center; margin-bottom: 40px; }
         .hero-section h2 { font-size: 2.4rem; margin-bottom: 8px; color: #fff; font-weight: 800; }
         .hero-section p { color: #94a3b8; font-size: 1.05rem; }
@@ -49,7 +79,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* شبكة المنتجات: بالضبط 3 أعمدة في الشاشات الكبيرة */
+        /* شبكة المنتجات: 3 أعمدة */
         .products-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -136,14 +166,13 @@
             background: #38bdf8;
             color: #0b0f19;
         }
-        /* شكل الزر عندما يكون المنتج مضافاً للسلة */
         .product-card.in-cart .add-to-cart-btn {
             background: #10b981;
             border-color: #10b981;
             color: white;
         }
 
-        /* زر "عرض المزيد" الاحترافي */
+        /* زر "عرض المزيد" */
         .load-more-container {
             text-align: center;
             margin-top: 40px;
@@ -166,6 +195,41 @@
             background: #334155;
             color: white;
             border-color: #38bdf8;
+        }
+
+        /* الفوتر مع اسم المطور */
+        footer {
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 25px 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-top: auto;
+        }
+        footer .developer-tag {
+            color: #38bdf8;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        footer .developer-tag:hover {
+            color: #6366f1;
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+        }
+
+        /* عنصر الصورة الطائرة نحو السلة */
+        .flying-item {
+            position: fixed;
+            z-index: 9999;
+            object-fit: cover;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 5px 15px rgba(56, 189, 248, 0.5);
         }
 
         /* تلخيص السلة */
@@ -213,9 +277,14 @@
                 <option value="fr">Français</option>
                 <option value="en">English</option>
             </select>
-            <button class="cart-btn" onclick="openCartModal()"><i class="fa-solid fa-cart-shopping"></i> <span id="t-cart">السلة</span> (<span id="cart-count">0</span>)</button>
         </div>
     </header>
+
+    <!-- زر السلة العائمة على اليسار -->
+    <button class="floating-cart-btn" id="floatingCartBtn" onclick="openCartModal()">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <div class="cart-badge" id="cart-count">0</div>
+    </button>
 
     <main>
         <div class="hero-section">
@@ -237,6 +306,11 @@
             </button>
         </div>
     </main>
+
+    <!-- الفوتر مع اسم المطور -->
+    <footer>
+        <p>© 2026 Samir Store. All rights reserved. | Developed by <a href="#" class="developer-tag">@chikor</a></p>
+    </footer>
 
     <!-- نموذج الطلب -->
     <div class="modal-overlay" id="orderModal">
@@ -299,7 +373,7 @@
 
         let cart = {};
         let productsData = [];
-        let visibleCount = 6; // عرض 6 منتجات افتراضياً في البداية (صفين كل صف 3 منتجات)
+        let visibleCount = 6; 
 
         const algerianWilayas = {
             "أدرار": ["أدرار", "أولف", "رقان", "تيمياوين", "زاوية كنتة"],
@@ -365,7 +439,6 @@
         const translations = {
             ar: {
                 storeName: "Samir Store",
-                cart: "السلة",
                 heroTitle: "اكتشف أحدث المنتجات والعروض",
                 heroDesc: "اختر منتجاتك المفضلة وأضفها للسلة بكل سهولة",
                 loading: "جاري تحميل المنتجات...",
@@ -391,7 +464,6 @@
             },
             fr: {
                 storeName: "Samir Store",
-                cart: "Panier",
                 heroTitle: "Découvrez les derniers produits",
                 heroDesc: "Choisissez vos produits préférés et ajoutez-les au panier",
                 loading: "Chargement des produits...",
@@ -417,7 +489,6 @@
             },
             en: {
                 storeName: "Samir Store",
-                cart: "Cart",
                 heroTitle: "Discover Latest Products & Deals",
                 heroDesc: "Choose your favorite items and add them to cart",
                 loading: "Loading products...",
@@ -449,7 +520,6 @@
             document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
 
             document.getElementById('t-store-name').innerText = t.storeName;
-            document.getElementById('t-cart').innerText = t.cart;
             document.getElementById('t-hero-title').innerText = t.heroTitle;
             document.getElementById('t-hero-desc').innerText = t.heroDesc;
             document.getElementById('t-modal-title').innerText = t.modalTitle;
@@ -545,7 +615,7 @@
                                 <input type="text" class="qty-input" value="${currentQty}" readonly>
                                 <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
                             </div>
-                            <button type="button" class="add-to-cart-btn" onclick='toggleCartItem(this, ${JSON.stringify(p.id)}, ${JSON.stringify(p.name)}, ${p.price}, ${JSON.stringify(p.image)})'>
+                            <button type="button" class="add-to-cart-btn" onclick='toggleCartItem(event, this, ${JSON.stringify(p.id)}, ${JSON.stringify(p.name)}, ${p.price}, ${JSON.stringify(p.image)})'>
                                 <i class="fa-solid fa-cart-plus"></i> <span>${cart[p.id] ? t.inCart : t.addToCart}</span>
                             </button>
                         </div>
@@ -554,7 +624,6 @@
                 container.appendChild(card);
             });
 
-            // إظهار أو إخفاء زر "عرض المزيد" بناءً على توفر منتجات إضافية
             const loadMoreBtnContainer = document.getElementById('loadMoreContainer');
             if (visibleCount < productsData.length) {
                 loadMoreBtnContainer.style.display = 'block';
@@ -564,7 +633,7 @@
         }
 
         window.loadMoreProducts = function() {
-            visibleCount += 6; // عرض 6 منتجات إضافية عند النقر
+            visibleCount += 6;
             renderProducts();
         }
 
@@ -583,7 +652,7 @@
             }
         }
 
-        window.toggleCartItem = function(button, id, name, price, image) {
+        window.toggleCartItem = function(event, button, id, name, price, image) {
             const card = button.closest('.product-card');
             const qty = parseInt(card.querySelector('.qty-input').value);
             const currentLang = document.getElementById('langSwitcher').value;
@@ -593,12 +662,50 @@
                 cart[id] = { name, price, qty, image };
                 card.classList.add('in-cart');
                 button.innerHTML = `<i class="fa-solid fa-check"></i> <span>${t.inCart}</span>`;
+
+                // تشغيل تأثير انيميشن الطيران والاهتزاز
+                triggerFlyToCart(event.target, image);
             } else {
                 delete cart[id];
                 card.classList.remove('in-cart');
                 button.innerHTML = `<i class="fa-solid fa-cart-plus"></i> <span>${t.addToCart}</span>`;
             }
             updateCartCount();
+        }
+
+        function triggerFlyToCart(targetElement, imgSrc) {
+            const cartBtn = document.getElementById('floatingCartBtn');
+            const cartRect = cartBtn.getBoundingClientRect();
+            
+            // تحديد نقطة البداية (من مكان زر الضغط)
+            const targetRect = targetElement.getBoundingClientRect();
+            
+            const flyer = document.createElement('img');
+            flyer.src = imgSrc;
+            flyer.className = 'flying-item';
+            flyer.style.left = `${targetRect.left + targetRect.width / 2 - 25}px`;
+            flyer.style.top = `${targetRect.top + targetRect.height / 2 - 25}px`;
+            flyer.style.width = '50px';
+            flyer.style.height = '50px';
+            document.body.appendChild(flyer);
+
+            // تحريك الصورة نحو السلة مع تقليص حجمها
+            setTimeout(() => {
+                flyer.style.left = `${cartRect.left + cartRect.width / 2 - 10}px`;
+                flyer.style.top = `${cartRect.top + cartRect.height / 2 - 10}px`;
+                flyer.style.width = '20px';
+                flyer.style.height = '20px';
+                flyer.style.opacity = '0.3';
+            }, 30);
+
+            // اهتزاز السلة عند وصول العنصر
+            setTimeout(() => {
+                flyer.remove();
+                cartBtn.classList.add('shake');
+                setTimeout(() => {
+                    cartBtn.classList.remove('shake');
+                }, 500);
+            }, 800);
         }
 
         function updateCartCount() {
