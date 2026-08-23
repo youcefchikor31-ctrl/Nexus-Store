@@ -727,7 +727,6 @@
                 return `- ${item.name} (الكمية: ${item.qty}) = ${sub} DZD`;
             }).join('\n');
 
-            // نص عادي خالص بدون أي تنسيق ماركداون (مثل النجوم أو الأقواس)
             const message = `طلب جديد من متجر Samir Store\n\n` +
                             `المنتجات:\n${itemsText}\n\n` +
                             `الإجمالي الكلي: ${total} DZD\n\n` +
@@ -737,26 +736,34 @@
                             `الدائرة: ${daira}`;
 
             const BOT_TOKEN = "8701140722:AAEMw7BCjIcoHaDGEUCX-fFNOiZOIJQTYzQ";
-            const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; 
+            
+            // تم تصحيح المعرفات لتشمل معرفك الصحيح فقط (ويمكنك إضافة معرفات رقمية صحيحة أخرى هنا)
+            const CHAT_IDS = ["573315219880"]; 
             
             try {
-                const promises = CHAT_IDS.map(chatId => 
-                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: chatId,
-                            text: message
-                            // تم حذف خاصية parse_mode تماماً ليصبح الإرسال نصاً عادياً 100%
-                        })
-                    }).then(res => res.json())
-                );
+                let sentSuccessfully = false;
 
-                const results = await Promise.all(promises);
-                const allSuccess = results.every(r => r.ok);
+                for (const chatId of CHAT_IDS) {
+                    try {
+                        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: message
+                            })
+                        });
+                        const result = await response.json();
+                        if (result.ok) {
+                            sentSuccessfully = true;
+                        }
+                    } catch (e) {
+                        console.error("Failed for chat:", chatId, e);
+                    }
+                }
 
                 setTimeout(() => {
-                    if (allSuccess) {
+                    if (sentSuccessfully) {
                         successMsg.className = 'success-msg success';
                         document.getElementById('t-success-title').innerText = t.successTitle;
                         document.getElementById('t-success-desc').innerText = t.successDesc;
@@ -775,7 +782,7 @@
                         if (oldBtn) oldBtn.remove();
                         document.getElementById('successMsg').appendChild(closeBtn);
                     } else {
-                        throw new Error("One or more messages failed");
+                        throw new Error("All messages failed");
                     }
                 }, 1000);
 
