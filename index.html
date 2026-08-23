@@ -169,30 +169,6 @@
             color: white;
         }
 
-        .load-more-container {
-            text-align: center;
-            margin-top: 40px;
-        }
-        .load-more-btn {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #cbd5e1;
-            padding: 12px 35px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .load-more-btn:hover {
-            background: #334155;
-            color: white;
-            border-color: #38bdf8;
-        }
-
         footer {
             background: rgba(15, 23, 42, 0.95);
             border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -290,12 +266,6 @@
                 <p id="t-loading" style="color: #94a3b8;">جاري تحميل المنتجات...</p>
             </div>
         </div>
-
-        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-            <button class="load-more-btn" onclick="loadMoreProducts()">
-                <i class="fa-solid fa-rotate"></i> <span id="t-load-more">عرض المزيد من المنتجات</span>
-            </button>
-        </div>
     </main>
 
     <footer>
@@ -362,7 +332,6 @@
 
         let cart = {};
         let productsData = [];
-        let visibleCount = 6; 
 
         const algerianWilayas = {
             "أدرار": ["أدرار", "أولف", "رقان", "تيمياوين", "زاوية كنتة"],
@@ -432,7 +401,6 @@
                 heroDesc: "اختر منتجاتك المفضلة وأضفها للسلة بكل سهولة",
                 loading: "جاري تحميل المنتجات...",
                 noProducts: "لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.",
-                loadMore: "عرض المزيد من المنتجات",
                 addToCart: "إضافة للسلة",
                 inCart: "تمت الإضافة ✓",
                 emptyCart: "الرجاء اختيار منتج واحد على الأقل وإضافته للسلة قبل إتمام الطلب.",
@@ -457,7 +425,6 @@
                 heroDesc: "Choisissez vos produits préférés et ajoutez-les au panier",
                 loading: "Chargement des produits...",
                 noProducts: "Aucun produit disponible pour le moment.",
-                loadMore: "Afficher plus de produits",
                 addToCart: "Ajouter au panier",
                 inCart: "Ajouté ✓",
                 emptyCart: "Veuillez sélectionner au moins un produit avant de commander.",
@@ -482,7 +449,6 @@
                 heroDesc: "Choose your favorite items and add them to cart",
                 loading: "Loading products...",
                 noProducts: "No products available at the moment.",
-                loadMore: "Load More Products",
                 addToCart: "Add to Cart",
                 inCart: "Added ✓",
                 emptyCart: "Please select at least one product before checking out.",
@@ -518,7 +484,6 @@
             document.getElementById('t-daira-label').innerText = t.dairaLabel;
             document.getElementById('t-submit-btn').innerText = t.submitBtn;
             document.getElementById('phone-error').innerText = t.errorPhone;
-            document.getElementById('t-load-more').innerText = t.loadMore;
 
             const loadingText = document.getElementById('t-loading');
             if (loadingText) loadingText.innerText = t.loading;
@@ -576,14 +541,11 @@
 
             if (productsData.length === 0) {
                 container.innerHTML = `<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">${t.noProducts}</p>`;
-                document.getElementById('loadMoreContainer').style.display = 'none';
                 return;
             }
 
             container.innerHTML = '';
-            const sliceData = productsData.slice(0, visibleCount);
-
-            sliceData.forEach((p) => {
+            productsData.forEach((p) => {
                 const card = document.createElement('div');
                 card.className = `product-card ${cart[p.id] ? 'in-cart' : ''}`;
                 card.dataset.productId = p.id;
@@ -612,18 +574,6 @@
                 `;
                 container.appendChild(card);
             });
-
-            const loadMoreBtnContainer = document.getElementById('loadMoreContainer');
-            if (visibleCount < productsData.length) {
-                loadMoreBtnContainer.style.display = 'block';
-            } else {
-                loadMoreBtnContainer.style.display = 'none';
-            }
-        }
-
-        window.loadMoreProducts = function() {
-            visibleCount += 6;
-            renderProducts();
         }
 
         window.addEventListener('DOMContentLoaded', loadProducts);
@@ -826,7 +776,7 @@
                     } else {
                         throw new Error("One or more messages failed");
                     }
-                }, 800);
+                }, 1000);
 
             } catch (err) {
                 console.error(err);
