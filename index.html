@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Store - المتجر الرقمي</title>
+    <title>Samir Store - المتجر الرقمي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -13,64 +13,162 @@
         
         header {
             position: fixed; top: 0; left: 0; width: 100%;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 5%; z-index: 100;
         }
-        .logo { font-size: 1.5rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        .logo { font-size: 1.6rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px; }
         
         .header-controls { display: flex; align-items: center; gap: 15px; }
         .lang-select {
             background: #1e293b; color: white; border: 1px solid #334155;
-            padding: 8px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; outline: none;
+            padding: 8px 14px; border-radius: 20px; font-weight: 600; cursor: pointer; outline: none;
         }
         .cart-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7); border: none;
-            padding: 10px 20px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
-            position: relative; display: flex; align-items: center; gap: 8px;
+            padding: 10px 22px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
+            position: relative; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: 0.2s;
         }
+        .cart-btn:hover { transform: scale(1.03); }
 
-        main { max-width: 1200px; margin: 120px auto 50px; padding: 0 20px; }
-        .hero-section { text-align: center; margin-bottom: 50px; }
-        .hero-section h2 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; }
-        .hero-section p { color: #94a3b8; font-size: 1.1rem; }
+        main { max-width: 1200px; margin: 120px auto 60px; padding: 0 20px; }
+        .hero-section { text-align: center; margin-bottom: 40px; }
+        .hero-section h2 { font-size: 2.4rem; margin-bottom: 8px; color: #fff; font-weight: 800; }
+        .hero-section p { color: #94a3b8; font-size: 1.05rem; }
 
         .loading-container {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            grid-column: 1 / -1; padding: 50px 0; gap: 15px;
+            grid-column: 1 / -1; padding: 60px 0; gap: 15px;
         }
         .spinner {
-            width: 50px; height: 50px; border: 5px solid rgba(56, 189, 248, 0.2);
+            width: 45px; height: 45px; border: 4px solid rgba(56, 189, 248, 0.2);
             border-top-color: #38bdf8; border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.9s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        /* شبكة المنتجات: بالضبط 3 أعمدة في الشاشات الكبيرة */
+        .products-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 25px; 
+        }
+        @media (max-width: 900px) {
+            .products-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .products-grid { grid-template-columns: 1fr; }
+        }
+
         .product-card {
-            background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px; overflow: hidden; transition: 0.3s ease; display: flex; flex-direction: column; justify-content: space-between;
+            background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
-        .product-card:hover { transform: translateY(-8px); border-color: rgba(56, 189, 248, 0.4); }
-        .product-img { width: 100%; height: 200px; object-fit: cover; background: #334155; }
-        .product-info { padding: 20px; }
-        .product-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: #f8fafc; }
-        .product-price { font-size: 1.3rem; font-weight: 900; color: #38bdf8; margin-bottom: 15px; }
-
-        .card-actions { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px; }
-        .quantity-control { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 5px 10px; }
-        .qty-btn { background: #334155; border: none; color: white; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .qty-input { background: transparent; border: none; color: white; text-align: center; width: 40px; font-size: 1rem; font-weight: bold; }
+        .product-card:hover { 
+            transform: translateY(-6px); 
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.1);
+        }
         
-        .select-control {
-            display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.5);
-            border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;
-            border: 1px solid transparent; transition: 0.2s;
+        .product-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 210px;
+            overflow: hidden;
+            background: #1e293b;
         }
-        .select-control:has(.select-checkbox:checked) { border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
-        .select-checkbox { width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer; }
+        .product-img { 
+            width: 100%; height: 100%; object-fit: cover; 
+            transition: transform 0.5s ease;
+        }
+        .product-card:hover .product-img { transform: scale(1.05); }
 
+        .product-info { padding: 18px 20px 10px; }
+        .product-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: #f8fafc; line-height: 1.4; }
+        .product-price { font-size: 1.25rem; font-weight: 900; color: #38bdf8; }
+
+        .card-actions { padding: 12px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .card-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .quantity-control { 
+            display: flex; align-items: center; 
+            background: rgba(15, 23, 42, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px; padding: 4px; 
+        }
+        .qty-btn { 
+            background: #334155; border: none; color: white; 
+            width: 28px; height: 28px; border-radius: 7px; 
+            cursor: pointer; font-weight: bold; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .qty-btn:hover { background: #475569; }
+        .qty-input { background: transparent; border: none; color: white; text-align: center; width: 35px; font-size: 0.95rem; font-weight: bold; }
+        
+        .add-to-cart-btn {
+            flex: 1;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .add-to-cart-btn:hover {
+            background: #38bdf8;
+            color: #0b0f19;
+        }
+        /* شكل الزر عندما يكون المنتج مضافاً للسلة */
+        .product-card.in-cart .add-to-cart-btn {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        /* زر "عرض المزيد" الاحترافي */
+        .load-more-container {
+            text-align: center;
+            margin-top: 40px;
+        }
+        .load-more-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .load-more-btn:hover {
+            background: #334155;
+            color: white;
+            border-color: #38bdf8;
+        }
+
+        /* تلخيص السلة */
         .cart-summary-item {
             display: flex; justify-content: space-between; padding: 6px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.9rem; color: #e2e8f0;
@@ -83,14 +181,14 @@
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);
             display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-content { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 450px; padding: 30px; border-radius: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #cbd5e1; font-size: 0.9rem; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; outline: none; }
         .form-group select { cursor: pointer; }
         .error-hint { color: #f43f5e; font-size: 0.75rem; margin-top: 4px; display: none; }
         .submit-order-btn { width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
@@ -108,7 +206,7 @@
 <body>
 
     <header>
-        <div class="logo"><i class="fa-solid fa-gem"></i> <span id="t-store-name">Nexus Store</span></div>
+        <div class="logo"><i class="fa-solid fa-bag-shopping"></i> <span id="t-store-name">Samir Store</span></div>
         <div class="header-controls">
             <select class="lang-select" id="langSwitcher" onchange="changeLanguage(this.value)">
                 <option value="ar">العربية</option>
@@ -122,14 +220,21 @@
     <main>
         <div class="hero-section">
             <h2 id="t-hero-title">اكتشف أحدث المنتجات والعروض</h2>
-            <p id="t-hero-desc">المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!</p>
+            <p id="t-hero-desc">اختر منتجاتك المفضلة وأضفها للسلة بكل سهولة</p>
         </div>
 
         <div class="products-grid" id="dynamic-products-container">
             <div class="loading-container" id="loadingSpinner">
                 <div class="spinner"></div>
-                <p id="t-loading" style="color: #94a3b8;">جاري تحميل المنتجات، يرجى الانتظار...</p>
+                <p id="t-loading" style="color: #94a3b8;">جاري تحميل المنتجات...</p>
             </div>
+        </div>
+
+        <!-- زر المزيد -->
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+            <button class="load-more-btn" onclick="loadMoreProducts()">
+                <i class="fa-solid fa-rotate"></i> <span id="t-load-more">عرض المزيد من المنتجات</span>
+            </button>
         </div>
     </main>
 
@@ -194,8 +299,8 @@
 
         let cart = {};
         let productsData = [];
+        let visibleCount = 6; // عرض 6 منتجات افتراضياً في البداية (صفين كل صف 3 منتجات)
 
-        // قائمة الولايات الـ 58 كاملة
         const algerianWilayas = {
             "أدرار": ["أدرار", "أولف", "رقان", "تيمياوين", "زاوية كنتة"],
             "الشلف": ["الشلف", "أولاد فارس", "بوقادير", "تنس", "الكريمية"],
@@ -259,13 +364,15 @@
 
         const translations = {
             ar: {
-                storeName: "Nexus Store",
+                storeName: "Samir Store",
                 cart: "السلة",
                 heroTitle: "اكتشف أحدث المنتجات والعروض",
-                heroDesc: "المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!",
-                loading: "جاري تحميل المنتجات، يرجى الانتظار...",
+                heroDesc: "اختر منتجاتك المفضلة وأضفها للسلة بكل سهولة",
+                loading: "جاري تحميل المنتجات...",
                 noProducts: "لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.",
-                selectLabel: "إضافة للطلب",
+                loadMore: "عرض المزيد من المنتجات",
+                addToCart: "إضافة للسلة",
+                inCart: "تمت الإضافة ✓",
                 emptyCart: "الرجاء اختيار منتج واحد على الأقل وإضافته للسلة قبل إتمام الطلب.",
                 cartTotal: "الإجمالي",
                 modalTitle: "تأكيد الطلب",
@@ -283,13 +390,15 @@
                 errorPhone: "رقم الهاتف يجب أن يكون 10 أرقام تبدأ بـ 05 أو 06 أو 07"
             },
             fr: {
-                storeName: "Nexus Store",
+                storeName: "Samir Store",
                 cart: "Panier",
                 heroTitle: "Découvrez les derniers produits",
-                heroDesc: "Les produits ci-dessous sont chargés directement depuis la base de données !",
-                loading: "Chargement des produits en cours, veuillez patienter...",
+                heroDesc: "Choisissez vos produits préférés et ajoutez-les au panier",
+                loading: "Chargement des produits...",
                 noProducts: "Aucun produit disponible pour le moment.",
-                selectLabel: "Ajouter au panier",
+                loadMore: "Afficher plus de produits",
+                addToCart: "Ajouter au panier",
+                inCart: "Ajouté ✓",
                 emptyCart: "Veuillez sélectionner au moins un produit avant de commander.",
                 cartTotal: "Total",
                 modalTitle: "Confirmation de commande",
@@ -307,13 +416,15 @@
                 errorPhone: "Le numéro doit comporter 10 chiffres (05, 06, 07)"
             },
             en: {
-                storeName: "Nexus Store",
+                storeName: "Samir Store",
                 cart: "Cart",
                 heroTitle: "Discover Latest Products & Deals",
-                heroDesc: "Products below are fetched directly from the database!",
-                loading: "Loading products, please wait...",
+                heroDesc: "Choose your favorite items and add them to cart",
+                loading: "Loading products...",
                 noProducts: "No products available at the moment.",
-                selectLabel: "Add to order",
+                loadMore: "Load More Products",
+                addToCart: "Add to Cart",
+                inCart: "Added ✓",
                 emptyCart: "Please select at least one product before checking out.",
                 cartTotal: "Total",
                 modalTitle: "Confirm Order",
@@ -348,6 +459,7 @@
             document.getElementById('t-daira-label').innerText = t.dairaLabel;
             document.getElementById('t-submit-btn').innerText = t.submitBtn;
             document.getElementById('phone-error').innerText = t.errorPhone;
+            document.getElementById('t-load-more').innerText = t.loadMore;
 
             const loadingText = document.getElementById('t-loading');
             if (loadingText) loadingText.innerText = t.loading;
@@ -359,7 +471,6 @@
         window.loadWilayas = function() {
             const wilayaSelect = document.getElementById('client-wilaya');
             wilayaSelect.innerHTML = '<option value="">-- اختر الولاية --</option>';
-            
             Object.keys(algerianWilayas).forEach(wilaya => {
                 const option = document.createElement('option');
                 option.value = wilaya;
@@ -372,9 +483,7 @@
             const wilayaSelect = document.getElementById('client-wilaya');
             const dairaSelect = document.getElementById('client-daira');
             const selectedWilaya = wilayaSelect.value;
-
             dairaSelect.innerHTML = '<option value="">-- اختر الدائرة --</option>';
-
             if (selectedWilaya && algerianWilayas[selectedWilaya]) {
                 algerianWilayas[selectedWilaya].forEach(daira => {
                     const option = document.createElement('option');
@@ -408,36 +517,55 @@
 
             if (productsData.length === 0) {
                 container.innerHTML = `<p style="text-align: center; color: #94a3b8; grid-column: 1/-1;">${t.noProducts}</p>`;
+                document.getElementById('loadMoreContainer').style.display = 'none';
                 return;
             }
 
             container.innerHTML = '';
-            productsData.forEach((p) => {
+            const sliceData = productsData.slice(0, visibleCount);
+
+            sliceData.forEach((p) => {
                 const card = document.createElement('div');
-                card.className = 'product-card';
+                card.className = `product-card ${cart[p.id] ? 'in-cart' : ''}`;
                 card.dataset.productId = p.id;
-                const isChecked = !!cart[p.id];
+                const currentQty = cart[p.id] ? cart[p.id].qty : 1;
+
                 card.innerHTML = `
-                    <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
+                    <div class="product-img-wrapper">
+                        <img src="${p.image}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'">
+                    </div>
                     <div class="product-info">
                         <div class="product-title">${p.name}</div>
                         <div class="product-price">${p.price} DZD</div>
                     </div>
                     <div class="card-actions">
-                        <div class="quantity-control">
-                            <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
-                            <input type="text" class="qty-input" value="${isChecked ? cart[p.id].qty : 1}" readonly>
-                            <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                        <div class="card-bottom-row">
+                            <div class="quantity-control">
+                                <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
+                                <input type="text" class="qty-input" value="${currentQty}" readonly>
+                                <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                            </div>
+                            <button type="button" class="add-to-cart-btn" onclick='toggleCartItem(this, ${JSON.stringify(p.id)}, ${JSON.stringify(p.name)}, ${p.price}, ${JSON.stringify(p.image)})'>
+                                <i class="fa-solid fa-cart-plus"></i> <span>${cart[p.id] ? t.inCart : t.addToCart}</span>
+                            </button>
                         </div>
-                        <label class="select-control">
-                            <input type="checkbox" class="select-checkbox" ${isChecked ? 'checked' : ''}
-                                onchange='toggleCartItem(this, ${JSON.stringify(p.id)}, ${JSON.stringify(p.name)}, ${p.price})'>
-                            <span>${t.selectLabel}</span>
-                        </label>
                     </div>
                 `;
                 container.appendChild(card);
             });
+
+            // إظهار أو إخفاء زر "عرض المزيد" بناءً على توفر منتجات إضافية
+            const loadMoreBtnContainer = document.getElementById('loadMoreContainer');
+            if (visibleCount < productsData.length) {
+                loadMoreBtnContainer.style.display = 'block';
+            } else {
+                loadMoreBtnContainer.style.display = 'none';
+            }
+        }
+
+        window.loadMoreProducts = function() {
+            visibleCount += 6; // عرض 6 منتجات إضافية عند النقر
+            renderProducts();
         }
 
         window.addEventListener('DOMContentLoaded', loadProducts);
@@ -455,13 +583,20 @@
             }
         }
 
-        window.toggleCartItem = function(checkbox, id, name, price) {
-            const card = checkbox.closest('.product-card');
+        window.toggleCartItem = function(button, id, name, price, image) {
+            const card = button.closest('.product-card');
             const qty = parseInt(card.querySelector('.qty-input').value);
-            if (checkbox.checked) {
-                cart[id] = { name, price, qty };
+            const currentLang = document.getElementById('langSwitcher').value;
+            const t = translations[currentLang];
+
+            if (!cart[id]) {
+                cart[id] = { name, price, qty, image };
+                card.classList.add('in-cart');
+                button.innerHTML = `<i class="fa-solid fa-check"></i> <span>${t.inCart}</span>`;
             } else {
                 delete cart[id];
+                card.classList.remove('in-cart');
+                button.innerHTML = `<i class="fa-solid fa-cart-plus"></i> <span>${t.addToCart}</span>`;
             }
             updateCartCount();
         }
@@ -488,8 +623,13 @@
         function resetCartUI() {
             cart = {};
             updateCartCount();
-            document.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = false);
-            document.querySelectorAll('.qty-input').forEach(input => input.value = 1);
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('in-cart');
+                card.querySelector('.qty-input').value = 1;
+                const currentLang = document.getElementById('langSwitcher').value;
+                const t = translations[currentLang];
+                card.querySelector('.add-to-cart-btn').innerHTML = `<i class="fa-solid fa-cart-plus"></i> <span>${t.addToCart}</span>`;
+            });
         }
 
         window.openCartModal = function() {
@@ -547,7 +687,7 @@
                 return `• ${item.name} (الكمية: ${item.qty}) = ${sub} DZD`;
             }).join('\n');
 
-            const message = `🚨 *طلب جديد من المتجر!*\n\n` +
+            const message = `🚨 *طلب جديد من متجر Samir Store!*\n\n` +
                             `🛍️ *المنتجات:*\n${itemsText}\n\n` +
                             `💰 *الإجمالي الكلي:* ${total} DZD\n\n` +
                             `👤 *الاسم:* ${name}\n` +
@@ -555,19 +695,20 @@
                             `📍 *الولاية:* ${wilaya}\n` +
                             `📍 *الدائرة:* ${daira}`;
 
-            // توكن البوت وحسابات الإرسال المدخلة مسبقاً
             const BOT_TOKEN = "8701140722:AAEMw7BCjIcoHaDGEUCX-fFNOiZOIJQTYzQ";
-            const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; // معرفات الحسابات المرفقة
+            const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; 
+            
+            const firstItemImage = items.length > 0 ? items[0].image : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80";
 
             try {
-                // إرسال الطلب لكلا الحسابين في وقت واحد
                 const promises = CHAT_IDS.map(chatId => 
-                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             chat_id: chatId,
-                            text: message,
+                            photo: firstItemImage,
+                            caption: message,
                             parse_mode: 'Markdown'
                         })
                     }).then(res => res.json())
