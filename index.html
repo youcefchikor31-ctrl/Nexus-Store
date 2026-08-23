@@ -28,6 +28,7 @@
         .cart-btn {
             background: linear-gradient(135deg, #6366f1, #a855f7); border: none;
             padding: 10px 20px; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;
+            position: relative; display: flex; align-items: center; gap: 8px;
         }
 
         main { max-width: 1200px; margin: 120px auto 50px; padding: 0 20px; }
@@ -35,7 +36,6 @@
         .hero-section h2 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; }
         .hero-section p { color: #94a3b8; font-size: 1.1rem; }
 
-        /* مؤشر التحميل الدارئ (Spinner) */
         .loading-container {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             grid-column: 1 / -1; padding: 50px 0; gap: 15px;
@@ -62,10 +62,7 @@
         .quantity-control { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 5px 10px; }
         .qty-btn { background: #334155; border: none; color: white; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .qty-input { background: transparent; border: none; color: white; text-align: center; width: 40px; font-size: 1rem; font-weight: bold; }
-        .buy-now-btn {
-            background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; padding: 12px;
-            border-radius: 12px; color: white; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;
-        }
+        
         .select-control {
             display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.5);
             border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;
@@ -73,6 +70,7 @@
         }
         .select-control:has(.select-checkbox:checked) { border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
         .select-checkbox { width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer; }
+
         .cart-summary-item {
             display: flex; justify-content: space-between; padding: 6px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.9rem; color: #e2e8f0;
@@ -82,7 +80,6 @@
             font-weight: 800; color: #38bdf8; font-size: 1rem;
         }
         #cart-summary { margin-bottom: 15px; background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 10px 14px; max-height: 160px; overflow-y: auto; }
-        .cart-btn { position: relative; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -129,7 +126,6 @@
         </div>
 
         <div class="products-grid" id="dynamic-products-container">
-            <!-- عنصر التحميل التلقائي -->
             <div class="loading-container" id="loadingSpinner">
                 <div class="spinner"></div>
                 <p id="t-loading" style="color: #94a3b8;">جاري تحميل المنتجات، يرجى الانتظار...</p>
@@ -196,10 +192,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let cart = {}; // { productId: { name, price, qty } }
+        let cart = {};
         let productsData = [];
 
-        // قائمة الولايات الجزائرية الـ 58 كاملة (مع الدوائر/البلديات الرئيسية لكل ولاية)
+        // قائمة الولايات الـ 58 كاملة
         const algerianWilayas = {
             "أدرار": ["أدرار", "أولف", "رقان", "تيمياوين", "زاوية كنتة"],
             "الشلف": ["الشلف", "أولاد فارس", "بوقادير", "تنس", "الكريمية"],
@@ -231,7 +227,7 @@
             "المسيلة": ["المسيلة", "بوسعادة", "سيدي عيسى", "عين الملح"],
             "معسكر": ["معسكر", "غريس", "المحمدية", "سيق"],
             "ورقلة": ["ورقلة", "حاسي مسعود", "الرويسات", "تماسين"],
-            "وهران": ["وهران", "السانية", "بئر الجير", "عين الترك"],
+            "وهران": ["وهران", "السانية", "بئر الجير", "عين الترك", "سيدي الشحمي", "أرزيو"],
             "البيض": ["البيض", "برياس", "بوقطب", "عين الأرنات"],
             "إليزي": ["إليزي", "برج عمر إدريس", "إن أميناس", "دبداب"],
             "برج بوعريريج": ["برج بوعريريج", "رأس الوادي", "المنصورة", "الحمادية"],
@@ -261,7 +257,6 @@
             "المنيعة": ["المنيعة", "حاسي الفحل"]
         };
 
-        // قاموس اللغات
         const translations = {
             ar: {
                 storeName: "Nexus Store",
@@ -270,13 +265,10 @@
                 heroDesc: "المنتجات المعروضة أدناه يتم جلبها مباشرة من قاعدة البيانات!",
                 loading: "جاري تحميل المنتجات، يرجى الانتظار...",
                 noProducts: "لا توجد منتجات حالياً، يرجى إضافتها عبر لوحة التحكم.",
-                buyBtn: "اطلب الآن",
-                selectLabel: "إضافة إلى الطلب",
-                emptyCart: "الرجاء اختيار منتج واحد على الأقل قبل إتمام الطلب.",
+                selectLabel: "إضافة للطلب",
+                emptyCart: "الرجاء اختيار منتج واحد على الأقل وإضافته للسلة قبل إتمام الطلب.",
                 cartTotal: "الإجمالي",
                 modalTitle: "تأكيد الطلب",
-                prodLabel: "المنتج المطلوب:",
-                qtyLabel: "الكمية:",
                 nameLabel: "الاسم واللقب:",
                 phoneLabel: "رقم الهاتف:",
                 wilayaLabel: "الولاية:",
@@ -297,13 +289,10 @@
                 heroDesc: "Les produits ci-dessous sont chargés directement depuis la base de données !",
                 loading: "Chargement des produits en cours, veuillez patienter...",
                 noProducts: "Aucun produit disponible pour le moment.",
-                buyBtn: "Commander",
-                selectLabel: "Ajouter à la commande",
+                selectLabel: "Ajouter au panier",
                 emptyCart: "Veuillez sélectionner au moins un produit avant de commander.",
                 cartTotal: "Total",
                 modalTitle: "Confirmation de commande",
-                prodLabel: "Produit souhaité:",
-                qtyLabel: "Quantité:",
                 nameLabel: "Nom et Prénom:",
                 phoneLabel: "Numéro de téléphone:",
                 wilayaLabel: "Wilaya:",
@@ -324,13 +313,10 @@
                 heroDesc: "Products below are fetched directly from the database!",
                 loading: "Loading products, please wait...",
                 noProducts: "No products available at the moment.",
-                buyBtn: "Buy Now",
                 selectLabel: "Add to order",
                 emptyCart: "Please select at least one product before checking out.",
                 cartTotal: "Total",
                 modalTitle: "Confirm Order",
-                prodLabel: "Selected Product:",
-                qtyLabel: "Quantity:",
                 nameLabel: "Full Name:",
                 phoneLabel: "Phone Number:",
                 wilayaLabel: "State:",
@@ -463,7 +449,6 @@
             let val = parseInt(input.value) + delta;
             if (val < 1) val = 1;
             input.value = val;
-            // إذا كان المنتج محدداً مسبقاً، حدّث الكمية في السلة مباشرة
             if (cart[productId]) {
                 cart[productId].qty = val;
                 updateCartCount();
@@ -529,7 +514,7 @@
             document.getElementById('orderModal').classList.remove('active');
         }
 
-        window.submitOrderToTelegram = function(event) {
+        window.submitOrderToTelegram = async function(event) {
             event.preventDefault();
             
             const name = document.getElementById('client-name').value.trim();
@@ -543,7 +528,6 @@
             }
             document.getElementById('phone-error').style.display = 'none';
 
-            // إخفاء النموذج وإظهار رسالة التحميل
             document.getElementById('order-form-container').style.display = 'none';
             const successMsg = document.getElementById('successMsg');
             successMsg.style.display = 'block';
@@ -555,7 +539,6 @@
             document.getElementById('t-success-title').innerText = t.processingTitle;
             document.getElementById('t-success-desc').innerText = t.processingDesc;
 
-            // بناء قائمة المنتجات المختارة والمجموع الكلي
             const items = Object.values(cart);
             let total = 0;
             const itemsText = items.map(item => {
@@ -572,27 +555,36 @@
                             `📍 *الولاية:* ${wilaya}\n` +
                             `📍 *الدائرة:* ${daira}`;
 
-            // الوسيط الآمن على Cloudflare Worker: يحتفظ بتوكن تيليجرام كسرّ ولا يظهر أبداً بكود الموقع
-            const WORKER_URL = "https://delicate-wildflower-19ba.youcefchikor31.workers.dev";
+            // توكن البوت وحسابات الإرسال المدخلة مسبقاً
+            const BOT_TOKEN = "8701140722:AAEMw7BCjIcoHaDGEUCX-fFNOiZOIJQTYzQ";
+            const CHAT_IDS = ["573315219880", "1:573315219880:web:ae5a4ef4e77789a2d81d9d"]; // معرفات الحسابات المرفقة
 
-            fetch(WORKER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            }).then(res => res.json()).then(data => {
-                const anyOk = !!data.ok;
+            try {
+                // إرسال الطلب لكلا الحسابين في وقت واحد
+                const promises = CHAT_IDS.map(chatId => 
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: message,
+                            parse_mode: 'Markdown'
+                        })
+                    }).then(res => res.json())
+                );
+
+                const results = await Promise.all(promises);
+                const allSuccess = results.every(r => r.ok);
+
                 setTimeout(() => {
-                    if (anyOk) {
-                        // نجاح
+                    if (allSuccess) {
                         successMsg.className = 'success-msg success';
                         document.getElementById('t-success-title').innerText = t.successTitle;
                         document.getElementById('t-success-desc').innerText = t.successDesc;
                         document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
 
-                        // إعادة تصفير السلة والاختيارات بعد نجاح الإرسال
                         resetCartUI();
 
-                        // إضافة زر الإغلاق
                         const closeBtn = document.createElement('button');
                         closeBtn.type = 'button';
                         closeBtn.className = 'submit-order-btn';
@@ -600,41 +592,20 @@
                         closeBtn.textContent = 'حسناً';
                         closeBtn.onclick = closeModal;
                         
-                        // إزالة أي أزرار سابقة
                         const oldBtn = document.querySelector('#successMsg .submit-order-btn');
                         if (oldBtn) oldBtn.remove();
                         document.getElementById('successMsg').appendChild(closeBtn);
                     } else {
-                        // فشل
-                        successMsg.className = 'success-msg error';
-                        document.getElementById('t-success-title').innerText = t.errorTitle;
-                        document.getElementById('t-success-desc').innerText = t.errorDesc;
-                        document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-                        
-                        // إضافة زر المحاولة مرة أخرى
-                        const retryBtn = document.createElement('button');
-                        retryBtn.type = 'button';
-                        retryBtn.className = 'submit-order-btn';
-                        retryBtn.style.marginTop = '20px';
-                        retryBtn.textContent = 'محاولة أخرى';
-                        retryBtn.onclick = () => {
-                            document.getElementById('order-form-container').style.display = 'block';
-                            document.getElementById('successMsg').style.display = 'none';
-                        };
-                        
-                        // إزالة أي أزرار سابقة
-                        const oldBtn = document.querySelector('#successMsg .submit-order-btn');
-                        if (oldBtn) oldBtn.remove();
-                        document.getElementById('successMsg').appendChild(retryBtn);
+                        throw new Error("One or more messages failed");
                     }
-                }, 2000); // تأخير 2 ثانية لعرض حالة التحميل
-            }).catch(err => {
-                // خطأ في الاتصال
+                }, 2000);
+
+            } catch (err) {
                 console.error(err);
                 setTimeout(() => {
                     successMsg.className = 'success-msg error';
                     document.getElementById('t-success-title').innerText = t.errorTitle;
-                    document.getElementById('t-success-desc').innerText = "خطأ في الاتصال بالخادم";
+                    document.getElementById('t-success-desc').innerText = t.errorDesc;
                     document.querySelector('#successMsg i').innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
                     
                     const retryBtn = document.createElement('button');
@@ -651,7 +622,7 @@
                     if (oldBtn) oldBtn.remove();
                     document.getElementById('successMsg').appendChild(retryBtn);
                 }, 2000);
-            });
+            }
         }
     </script>
 </body>
